@@ -36,6 +36,7 @@ const steelToolingSizes: number[] = [
 ========================= */
 
 // 1. The Core DP Solver (Private, only solves <= 2 inches)
+
 function solveSmallUnits(targetUnits: number): Tool[] | null {
   const steelTools: Tool[] = steelToolingSizes.map(size => ({
     size,
@@ -56,7 +57,27 @@ function solveSmallUnits(targetUnits: number): Tool[] | null {
       const candidate = [...currentSetup, tool];
       const existing = dp[next];
 
-      if (!existing || candidate.length < existing.length) {
+      // LOGIC UPGRADE:
+      let isBetter = false;
+
+      if (!existing) {
+        // No solution yet? This is automatically better.
+        isBetter = true;
+      } else if (candidate.length < existing.length) {
+        // Fewer tools? definitely better.
+        isBetter = true;
+      } else if (candidate.length === existing.length) {
+        // TIE BREAKER: Same number of tools?
+        // Check if the new candidate contains a larger "Max Tool" than the existing one.
+        const candidateMax = Math.max(...candidate.map(t => t.size));
+        const existingMax = Math.max(...existing.map(t => t.size));
+
+        if (candidateMax > existingMax) {
+          isBetter = true;
+        }
+      }
+
+      if (isBetter) {
         dp[next] = candidate;
       }
     }

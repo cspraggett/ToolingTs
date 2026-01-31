@@ -1,4 +1,3 @@
-import React from "react";
 import { summarizeAndSortStack, type ToolingSetup } from "./toolingLogic";
 import { styles } from "./styles";
 

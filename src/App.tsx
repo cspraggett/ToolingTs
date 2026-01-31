@@ -1,5 +1,5 @@
 // App.tsx (or SteelToolingCalculator.tsx)
-import React, { useMemo, useState, ChangeEvent } from "react";
+import { useMemo, useState, ChangeEvent } from "react";
 import { findExactSteelSetup, type ToolingSetup } from "./toolingLogic"; // Note: summarizeAndSortStack is removed from here
 import { styles } from "./styles";
 import { ResultDisplay } from "./ResultDisplay"; // Import the new component

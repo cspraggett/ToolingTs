@@ -1,22 +1,10 @@
-// App.tsx (or SteelToolingCalculator.tsx)
-import { useMemo, useState, ChangeEvent } from "react";
-import { findExactSteelSetup, type ToolingSetup } from "./toolingLogic"; // Note: summarizeAndSortStack is removed from here
+import { useSteelTooling } from "./useSteelTooling"; // Import your new hook
 import { styles } from "./styles";
-import { ResultDisplay } from "./ResultDisplay"; // Import the new component
+import { ResultDisplay } from "./ResultDisplay"; // Your display component
 
 export default function SteelToolingCalculator() {
-  const [targetWidth, setTargetWidth] = useState<string>("");
-
-  const calculationResult = useMemo<ToolingSetup | null>(() => {
-    const parsedWidth = parseFloat(targetWidth);
-    if (isNaN(parsedWidth) || parsedWidth <= 0) return null;
-
-    return findExactSteelSetup(parsedWidth);
-  }, [targetWidth]);
-
-  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setTargetWidth(event.target.value);
-  };
+  // One line to rule them all!
+  const { targetWidth, result, handleInputChange } = useSteelTooling();
 
   return (
     <div style={styles.container}>
@@ -31,14 +19,14 @@ export default function SteelToolingCalculator() {
         style={styles.input}
       />
 
-      {!calculationResult && (
+      {/* Logic for showing helper text vs result */}
+      {!result ? (
         <p style={styles.helper}>
           Enter a width to calculate tooling
         </p>
+      ) : (
+        <ResultDisplay result={result} />
       )}
-
-      {/* Look how clean this part is now! */}
-      {calculationResult && <ResultDisplay result={calculationResult} />}
     </div>
   );
 }

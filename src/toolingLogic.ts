@@ -88,6 +88,7 @@ function solveSmallUnits(targetUnits: number): Tool[] | null {
 
 // 2. The Public Wrapper (Greedy reduction)
 export function findExactSteelSetup(targetWidthInches: number): ToolingSetup | null {
+  if (targetWidthInches <= 0) return null;
   // Convert to integer units immediately to avoid float math errors
   let unitsToSolve = inchesToUnits(targetWidthInches);
 

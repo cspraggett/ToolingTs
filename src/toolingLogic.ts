@@ -1,8 +1,3 @@
-// toolingLogic.ts
-
-/* =========================
-   TYPES (Moved here to be shared)
-========================= */
 export interface Tool {
   size: number;
   units: number;
@@ -23,7 +18,6 @@ export interface ToolSummary {
 ========================= */
 const UNITS_PER_INCH = 1000;
 
-// Not exported because it's only used internally by the solver
 const inchesToUnits = (inches: number): number =>
   Math.round(inches * UNITS_PER_INCH);
 

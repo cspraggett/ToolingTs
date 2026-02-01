@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findExactSteelSetup } from './toolingLogic';
+import { findBestDualSetup, findExactSteelSetup } from './toolingLogic';
 
 describe('Tooling Logic Solver', () => {
 
@@ -78,5 +78,65 @@ describe('Tooling Logic Solver', () => {
     // Ensure we didn't just get 3 of the same thing
     const countOf31 = result?.stack.filter(t => t.size === 0.031).length;
     expect(countOf31).toBeLessThanOrEqual(2);
+  });
+
+  it('avoids the Greedy Trap for 2.248"', () => {
+    // 2.248 is tricky. 
+    // If you take 2.0" first, the remaining 0.248" is impossible.
+    // The solver must be smart enough to try 1.0" + ... instead.
+
+    const result = findExactSteelSetup(2.248);
+
+    expect(result).not.toBeNull();
+
+    // Verify the math
+    const sum = result?.stack.reduce((acc, t) => acc + t.size, 0);
+    expect(sum).toBeCloseTo(2.248);
+
+    // Verify it found the solution using the 1" block, not the 2"
+    const hasTwoInch = result?.stack.some(t => t.size === 2);
+    expect(hasTwoInch).toBe(false);
+  });
+});
+
+describe('Dual Setup Optimizer', () => {
+  it('finds a better setup by applying an offset', () => {
+    // Scenario:
+    // Target 1.503. Exact match = 1.0 + 0.5 + 0.031 (3 tools)
+    // If we shift -0.003 -> 1.500. Exact match = 1.0 + 0.5 (2 tools)
+
+    const male = 1.503;
+    const female = 2.503; // 2.0 + 0.5 + 0.031
+
+    // Allow +/- 0.005
+    const result = findBestDualSetup(male, female, 0.005, 0.005);
+
+    expect(result).not.toBeNull();
+
+    // It should choose -0.003 offset to hit the clean 1.500 numbers
+    expect(result?.offset).toBeCloseTo(-0.003);
+
+    // Verify the tool count is optimized
+    // Original (at 1.503/2.503): ~6 tools total
+    // Optimized (at 1.500/2.500): ~4 tools total
+    expect(result?.totalToolCount).toBeLessThan(6);
+  });
+
+  it('respects the tolerance window constraints', () => {
+    const male = 1.000;
+    const female = 2.000;
+
+    // CONSTRAINT TEST:
+    // We want to force the solver to pick a POSITIVE offset.
+    // The loop runs from [-Minus] to [+Plus].
+    // If we pass -0.001 as the "Minus Tolerance", the loop starts at -(-0.001) = +0.001.
+
+    const result = findBestDualSetup(male, female, -0.001, 0.005);
+
+    expect(result).not.toBeNull();
+
+    // Even though 0.000 is the perfect mathematical answer, 
+    // we forced the window to start at +0.001.
+    expect(result?.offset).toBeGreaterThanOrEqual(0.001);
   });
 });

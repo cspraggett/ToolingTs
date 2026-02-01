@@ -148,3 +148,75 @@ export function summarizeAndSortStack(toolStack: Tool[]): ToolSummary[] {
     }))
     .sort((a, b) => b.size - a.size);
 }
+
+// toolingLogic.ts
+
+// ... (Existing code) ...
+
+/* =========================
+   OPTIMIZER (Dual Value)
+========================= */
+
+export interface DualOptimizationResult {
+  offset: number;          // The "magic number" we decided to add (e.g., 0.002)
+  maleResult: ToolingSetup;
+  femaleResult: ToolingSetup;
+  totalToolCount: number;
+}
+
+export function findBestDualSetup(
+  maleInches: number,
+  femaleInches: number,
+  minusTolInches: number, // e.g., 0.002
+  plusTolInches: number   // e.g., 0.005
+): DualOptimizationResult | null {
+  // Convert limits to integer units (e.g., 0.005 -> 5)
+  const minUnits = inchesToUnits(minusTolInches);
+  const maxUnits = inchesToUnits(plusTolInches);
+
+  let bestResult: DualOptimizationResult | null = null;
+
+  // LOOP: Iterate from -Minus to +Plus
+  // Example: if range is -0.001 to +0.001, we test offsets: -1, 0, 1
+  for (let offsetUnits = -minUnits; offsetUnits <= maxUnits; offsetUnits++) {
+
+    // Calculate the candidate sizes
+    // We add the offset (converted back to inches) to the targets
+    const currentOffsetInches = offsetUnits / 1000;
+    const candidateMale = maleInches + currentOffsetInches;
+    const candidateFemale = femaleInches + currentOffsetInches;
+
+    // Run the solver for both
+    const solM = findExactSteelSetup(candidateMale);
+    const solF = findExactSteelSetup(candidateFemale);
+
+    // If this offset makes EITHER size impossible (e.g. negative), skip it
+    if (!solM || !solF) continue;
+
+    // Calculate total complexity (number of pieces)
+    const currentCount = solM.stack.length + solF.stack.length;
+
+    // SCORING:
+    // If we haven't found a result yet, this is the best.
+    // OR if this result uses FEWER total pieces, it's the new best.
+    let isNewBest = false;
+
+    if (!bestResult) {
+      isNewBest = true;
+    } else if (currentCount < bestResult.totalToolCount) {
+      isNewBest = true;
+    }
+    // Optional: You could add a tie-breaker here (e.g. prefer positive offsets)
+
+    if (isNewBest) {
+      bestResult = {
+        offset: currentOffsetInches,
+        maleResult: solM,
+        femaleResult: solF,
+        totalToolCount: currentCount
+      };
+    }
+  }
+
+  return bestResult;
+}

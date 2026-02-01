@@ -2,32 +2,24 @@ import { useState } from "react";
 import { useSteelTooling } from "./useSteelTooling";
 import { styles } from "./styles";
 import { ResultDisplay } from "./ResultDisplay";
-import { OptimizerMode } from "./OptimizerMode"; // Import new component
+import { OptimizerMode } from "./OptimizerMode";
 
 export default function SteelToolingCalculator() {
-  // 1. TAB STATE
   const [mode, setMode] = useState<"single" | "optimizer">("single");
-
-  // Single Mode Hooks (Only run when needed, but React hooks must always be called, 
-  // so we leave them here. It's cheap.)
   const singleTools = useSteelTooling();
 
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>Steel Tooling Calculator</h2>
 
-      {/* TAB SWITCHER UI */}
-      <div style={{ display: "flex", marginBottom: "1.5rem", borderBottom: "1px solid #ddd" }}>
+      {/* CLEAN TAB SWITCHER */}
+      <div style={styles.tabContainer}>
         <button
           onClick={() => setMode("single")}
+          // If mode is single, merge 'tabButton' with 'tabButtonActive'
           style={{
-            flex: 1,
-            padding: "0.75rem",
-            border: "none",
-            background: "none",
-            fontWeight: mode === "single" ? "bold" : "normal",
-            borderBottom: mode === "single" ? "3px solid #007bff" : "none",
-            cursor: "pointer"
+            ...styles.tabButton,
+            ...(mode === "single" ? styles.tabButtonActive : {})
           }}
         >
           Single
@@ -35,22 +27,15 @@ export default function SteelToolingCalculator() {
         <button
           onClick={() => setMode("optimizer")}
           style={{
-            flex: 1,
-            padding: "0.75rem",
-            border: "none",
-            background: "none",
-            fontWeight: mode === "optimizer" ? "bold" : "normal",
-            borderBottom: mode === "optimizer" ? "3px solid #007bff" : "none",
-            cursor: "pointer"
+            ...styles.tabButton,
+            ...(mode === "optimizer" ? styles.tabButtonActive : {})
           }}
         >
           Optimizer
         </button>
       </div>
 
-      {/* CONDITIONAL RENDERING */}
       {mode === "single" ? (
-        // === ORIGINAL SINGLE MODE ===
         <>
           <input
             type="number"
@@ -68,7 +53,6 @@ export default function SteelToolingCalculator() {
           )}
         </>
       ) : (
-        // === NEW OPTIMIZER MODE ===
         <OptimizerMode />
       )}
     </div>

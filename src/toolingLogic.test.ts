@@ -139,4 +139,19 @@ describe('Dual Setup Optimizer', () => {
     // we forced the window to start at +0.001.
     expect(result?.offset).toBeGreaterThanOrEqual(0.001);
   });
+
+
+  it('handles negative tolerance preference', () => {
+    // Scenario: Target is 1.252"
+    // Sweet spot is 1.251" (-0.001 offset)
+    // Range is +0.003 / -0.001
+
+    const male = 1.252;
+    const female = 1.746; // Just keeping the gap roughly similar
+
+    const result = findBestDualSetup(male, female, 0.001, 0.003);
+
+    expect(result).not.toBeNull();
+    expect(result?.offset).toBeCloseTo(-0.001);
+  });
 });

@@ -37,6 +37,8 @@ const steelToolingSizes: number[] = [
 
 // 1. The Core DP Solver (Private, only solves <= 2 inches)
 
+// toolingLogic.ts
+
 function solveSmallUnits(targetUnits: number): Tool[] | null {
   const steelTools: Tool[] = steelToolingSizes.map(size => ({
     size,
@@ -50,31 +52,35 @@ function solveSmallUnits(targetUnits: number): Tool[] | null {
     const currentSetup = dp[i];
     if (!currentSetup) continue;
 
+    // REMOVED: The check for 'currentSetup.length >= 2' is gone.
+    // We now allow taller stacks, provided they use different tools.
+
     for (const tool of steelTools) {
       const next = i + tool.units;
       if (next > targetUnits) continue;
 
+      // === NEW INVENTORY CHECK ===
+      // Count how many of THIS specific tool size we are already using.
+      // If we already have 2, we cannot add a 3rd.
+      const countOfThisTool = currentSetup.filter(t => t.size === tool.size).length;
+      if (countOfThisTool >= 2) continue;
+      // ===========================
+
       const candidate = [...currentSetup, tool];
       const existing = dp[next];
 
-      // LOGIC UPGRADE:
+      // Standard "Find the best stack" logic
       let isBetter = false;
 
       if (!existing) {
-        // No solution yet? This is automatically better.
         isBetter = true;
       } else if (candidate.length < existing.length) {
-        // Fewer tools? definitely better.
         isBetter = true;
       } else if (candidate.length === existing.length) {
-        // TIE BREAKER: Same number of tools?
-        // Check if the new candidate contains a larger "Max Tool" than the existing one.
+        // Tie-breaker: Prefer larger tools
         const candidateMax = Math.max(...candidate.map(t => t.size));
         const existingMax = Math.max(...existing.map(t => t.size));
-
-        if (candidateMax > existingMax) {
-          isBetter = true;
-        }
+        if (candidateMax > existingMax) isBetter = true;
       }
 
       if (isBetter) {
@@ -87,31 +93,37 @@ function solveSmallUnits(targetUnits: number): Tool[] | null {
 }
 
 // 2. The Public Wrapper (Greedy reduction)
+/* =========================
+   SOLVER LOGIC
+========================= */
+
+// ... (keep solveSmallUnits exactly as we wrote it, with the Inventory Check) ...
+
 export function findExactSteelSetup(targetWidthInches: number): ToolingSetup | null {
+  // 1. Guard Clause
   if (targetWidthInches <= 0) return null;
-  // Convert to integer units immediately to avoid float math errors
+
   let unitsToSolve = inchesToUnits(targetWidthInches);
 
   const bigTools: Tool[] = [];
   const UNIT_3 = 3000;
-  const UNIT_2 = 2000;
 
-  // OPTIMIZATION:
-  // As long as we are above 2.0" (2000 units), we can safely peel off
-  // 3s and 2s because 1" is available in the DP set if needed.
+  // === THE FIX IS HERE ===
+  // Previously, we stripped big blocks if the target was > 2 inches.
+  // Now, we wait until the target is > 6 inches.
+  // This allows the DP solver to handle tricky numbers like 2.248 or 3.248
+  // by trying combinations (like 1" + 0.5"...) that the Greedy loop would miss.
 
-  while (unitsToSolve > UNIT_2) {
-    if (unitsToSolve >= UNIT_3) {
-      bigTools.push({ size: 3, units: UNIT_3 });
-      unitsToSolve -= UNIT_3;
-    } else {
-      // If between 2001 and 2999, peel off a 2"
-      bigTools.push({ size: 2, units: UNIT_2 });
-      unitsToSolve -= UNIT_2;
-    }
+  const SAFE_BUFFER = 6000;
+
+  while (unitsToSolve > SAFE_BUFFER) {
+    bigTools.push({ size: 3, units: UNIT_3 });
+    unitsToSolve -= UNIT_3;
   }
 
-  // Now we solve the remainder (guaranteed to be <= 2.0")
+  // Now we pass the full 2248 units to the solver.
+  // It will try [2.0 + 0.248] -> FAIL
+  // Then it will try [1.0 + 1.248] -> SUCCESS
   const dpSolution = solveSmallUnits(unitsToSolve);
 
   if (!dpSolution) return null;

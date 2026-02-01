@@ -62,4 +62,21 @@ describe('Tooling Logic Solver', () => {
     expect(findExactSteelSetup(0)).toBeNull();
     expect(findExactSteelSetup(-5)).toBeNull();
   });
+
+  // src/toolingLogic.test.ts
+
+  it('never uses more than 2 of the same tool size', () => {
+    // 0.093 is 3 x 0.031. 
+    // If we limit to 2 per size, this exact match is impossible 
+    // (assuming no other combination makes 0.093).
+    // Actually, 0.062 + 0.031 = 0.093. 
+    // So the solver SHOULD find 0.062 + 0.031 instead of 3 x 0.031.
+
+    const result = findExactSteelSetup(0.093);
+    expect(result).not.toBeNull();
+
+    // Ensure we didn't just get 3 of the same thing
+    const countOf31 = result?.stack.filter(t => t.size === 0.031).length;
+    expect(countOf31).toBeLessThanOrEqual(2);
+  });
 });

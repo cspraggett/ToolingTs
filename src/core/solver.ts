@@ -82,7 +82,7 @@ export function findToolingSetup(
   const targetUnits = inchesToUnits(targetInches);
   const activeTools = getActiveTools(machine, !!options.strictMode);
 
-  const SAFE_BUFFER = 2000;
+  const SAFE_BUFFER = 6000;
   let remainingUnits = targetUnits;
   const bigStack: Tool[] = [];
 

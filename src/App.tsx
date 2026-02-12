@@ -3,9 +3,10 @@ import { useSteelTooling } from "./useSteelTooling";
 import { styles } from "./styles";
 import { ResultDisplay } from "./ResultDisplay";
 import { OptimizerMode } from "./OptimizerMode";
+import { StationCalculatorMode } from "./StationCalculatorMode";
 
 export default function SteelToolingCalculator() {
-  const [mode, setMode] = useState<"single" | "optimizer">("single");
+  const [mode, setMode] = useState<"single" | "optimizer" | "station">("single");
   const singleTools = useSteelTooling();
 
   return (
@@ -33,6 +34,15 @@ export default function SteelToolingCalculator() {
         >
           Optimizer
         </button>
+        <button
+          onClick={() => setMode("station")}
+          style={{
+            ...styles.tabButton,
+            ...(mode === "station" ? styles.tabButtonActive : {})
+          }}
+        >
+          Station
+        </button>
       </div>
 
       {mode === "single" ? (
@@ -52,8 +62,10 @@ export default function SteelToolingCalculator() {
             <ResultDisplay result={singleTools.result} />
           )}
         </>
-      ) : (
+      ) : mode === "optimizer" ? (
         <OptimizerMode />
+      ) : (
+        <StationCalculatorMode />
       )}
     </div>
   );

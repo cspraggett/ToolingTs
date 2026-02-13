@@ -21,10 +21,10 @@ export interface ToolSummary {
 ========================= */
 const UNITS_PER_INCH = 1000;
 
-// Conversion helper
 const inchesToUnits = (inches: number): number =>
   Math.round(inches * UNITS_PER_INCH);
 
+// YOUR SPECIFIC TOOL LIST
 const steelToolingSizes: number[] = [
   3, 2, 1, 0.875, 0.75, 0.625, 0.5, 0.4, 0.375,
   0.3, 0.26, 0.257, 0.255, 0.253, 0.252, 0.251, 0.25,
@@ -35,16 +35,8 @@ const steelToolingSizes: number[] = [
    SOLVER LOGIC
 ========================= */
 
-// 1. The Core DP Solver (Private, only solves <= 2 inches)
-
-// toolingLogic.ts
-
-function solveSmallUnits(targetUnits: number): Tool[] | null {
-  const steelTools: Tool[] = steelToolingSizes.map(size => ({
-    size,
-    units: inchesToUnits(size)
-  }));
-
+// UPDATED: Now accepts 'availableTools' as an argument
+function solveSmallUnits(targetUnits: number, availableTools: Tool[]): Tool[] | null {
   const dp: (Tool[] | null)[] = Array(targetUnits + 1).fill(null);
   dp[0] = [];
 
@@ -52,26 +44,19 @@ function solveSmallUnits(targetUnits: number): Tool[] | null {
     const currentSetup = dp[i];
     if (!currentSetup) continue;
 
-    // REMOVED: The check for 'currentSetup.length >= 2' is gone.
-    // We now allow taller stacks, provided they use different tools.
-
-    for (const tool of steelTools) {
+    for (const tool of availableTools) {
       const next = i + tool.units;
       if (next > targetUnits) continue;
 
-      // === NEW INVENTORY CHECK ===
-      // Count how many of THIS specific tool size we are already using.
-      // If we already have 2, we cannot add a 3rd.
+      // INVENTORY CHECK (Max 2 of any specific tool)
       const countOfThisTool = currentSetup.filter(t => t.size === tool.size).length;
       if (countOfThisTool >= 2) continue;
-      // ===========================
 
       const candidate = [...currentSetup, tool];
       const existing = dp[next];
 
-      // Standard "Find the best stack" logic
+      // Optimization Logic
       let isBetter = false;
-
       if (!existing) {
         isBetter = true;
       } else if (candidate.length < existing.length) {
@@ -92,39 +77,40 @@ function solveSmallUnits(targetUnits: number): Tool[] | null {
   return dp[targetUnits];
 }
 
-// 2. The Public Wrapper (Greedy reduction)
-/* =========================
-   SOLVER LOGIC
-========================= */
+// UPDATED: Accepts 'useRiskyTools' flag
+export function findExactSteelSetup(
+  targetWidthInches: number,
+  useRiskyTools: boolean = true // Default to true (Allow everything)
+): ToolingSetup | null {
 
-// ... (keep solveSmallUnits exactly as we wrote it, with the Inventory Check) ...
-
-export function findExactSteelSetup(targetWidthInches: number): ToolingSetup | null {
-  // 1. Guard Clause
   if (targetWidthInches <= 0) return null;
 
-  let unitsToSolve = inchesToUnits(targetWidthInches);
+  // 1. FILTERING STEP
+  // If useRiskyTools is FALSE, we remove .031 and .062 from the list
+  let activeSizes = steelToolingSizes;
+  if (!useRiskyTools) {
+    activeSizes = steelToolingSizes.filter(s => s !== 0.031 && s !== 0.062);
+  }
 
+  // Convert to Tool objects with units
+  const activeTools: Tool[] = activeSizes.map(size => ({
+    size,
+    units: inchesToUnits(size)
+  }));
+
+  let unitsToSolve = inchesToUnits(targetWidthInches);
   const bigTools: Tool[] = [];
   const UNIT_3 = 3000;
-
-  // === THE FIX IS HERE ===
-  // Previously, we stripped big blocks if the target was > 2 inches.
-  // Now, we wait until the target is > 6 inches.
-  // This allows the DP solver to handle tricky numbers like 2.248 or 3.248
-  // by trying combinations (like 1" + 0.5"...) that the Greedy loop would miss.
-
   const SAFE_BUFFER = 6000;
 
+  // 2. GREEDY REDUCTION (Using 3" spacers)
   while (unitsToSolve > SAFE_BUFFER) {
     bigTools.push({ size: 3, units: UNIT_3 });
     unitsToSolve -= UNIT_3;
   }
 
-  // Now we pass the full 2248 units to the solver.
-  // It will try [2.0 + 0.248] -> FAIL
-  // Then it will try [1.0 + 1.248] -> SUCCESS
-  const dpSolution = solveSmallUnits(unitsToSolve);
+  // 3. RUN SOLVER with the FILTERED tool list
+  const dpSolution = solveSmallUnits(unitsToSolve, activeTools);
 
   if (!dpSolution) return null;
 
@@ -149,16 +135,12 @@ export function summarizeAndSortStack(toolStack: Tool[]): ToolSummary[] {
     .sort((a, b) => b.size - a.size);
 }
 
-// toolingLogic.ts
-
-// ... (Existing code) ...
-
 /* =========================
    OPTIMIZER (Dual Value)
 ========================= */
 
 export interface DualOptimizationResult {
-  offset: number;          // The "magic number" we decided to add (e.g., 0.002)
+  offset: number;
   maleResult: ToolingSetup;
   femaleResult: ToolingSetup;
   totalToolCount: number;
@@ -167,38 +149,32 @@ export interface DualOptimizationResult {
 export function findBestDualSetup(
   maleInches: number,
   femaleInches: number,
-  minusTolInches: number, // e.g., 0.002
-  plusTolInches: number   // e.g., 0.005
+  minusTolInches: number,
+  plusTolInches: number,
+  useRiskyTools: boolean = true // Pass the flag here
 ): DualOptimizationResult | null {
-  // Convert limits to integer units (e.g., 0.005 -> 5)
+
   const minUnits = inchesToUnits(minusTolInches);
   const maxUnits = inchesToUnits(plusTolInches);
 
   let bestResult: DualOptimizationResult | null = null;
 
-  // LOOP: Iterate from -Minus to +Plus
-  // Example: if range is -0.001 to +0.001, we test offsets: -1, 0, 1
-  for (let offsetUnits = -minUnits; offsetUnits <= maxUnits; offsetUnits++) {
+  // SAFETY: Stop massive loops
+  if (maxUnits > 500 || minUnits > 500) return null;
 
-    // Calculate the candidate sizes
-    // We add the offset (converted back to inches) to the targets
+  for (let offsetUnits = -minUnits; offsetUnits <= maxUnits; offsetUnits++) {
     const currentOffsetInches = offsetUnits / 1000;
     const candidateMale = maleInches + currentOffsetInches;
     const candidateFemale = femaleInches + currentOffsetInches;
 
-    // Run the solver for both
-    const solM = findExactSteelSetup(candidateMale);
-    const solF = findExactSteelSetup(candidateFemale);
+    // PASS THE FLAG
+    const solM = findExactSteelSetup(candidateMale, useRiskyTools);
+    const solF = findExactSteelSetup(candidateFemale, useRiskyTools);
 
-    // If this offset makes EITHER size impossible (e.g. negative), skip it
     if (!solM || !solF) continue;
 
-    // Calculate total complexity (number of pieces)
     const currentCount = solM.stack.length + solF.stack.length;
 
-    // SCORING:
-    // If we haven't found a result yet, this is the best.
-    // OR if this result uses FEWER total pieces, it's the new best.
     let isNewBest = false;
 
     if (!bestResult) {
@@ -206,7 +182,6 @@ export function findBestDualSetup(
     } else if (currentCount < bestResult.totalToolCount) {
       isNewBest = true;
     }
-    // Optional: You could add a tie-breaker here (e.g. prefer positive offsets)
 
     if (isNewBest) {
       bestResult = {

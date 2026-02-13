@@ -1,27 +1,28 @@
-import { summarizeAndSortStack, type ToolingSetup } from "./toolingLogic";
+import { ToolingSetup, summarizeAndSortStack } from "./toolingLogic";
 import { styles } from "./styles";
 
-// 1. Define what data this component needs to work
 interface ResultDisplayProps {
-  result: ToolingSetup; // We reuse the type we made earlier!
+  result: ToolingSetup;
 }
 
-// 2. The Component
 export function ResultDisplay({ result }: ResultDisplayProps) {
-  return (
-    <>
-      <p style={styles.resultHeader}>
-        {result.width.toFixed(3)}" Setup
-      </p>
+  if (!result || !result.stack) return null;
 
-      <ul style={styles.list}>
-        {summarizeAndSortStack(result.stack).map((item) => (
-          <li key={item.size} style={styles.listItem}>
-            <span>{item.size.toFixed(3)}"</span>
-            <span>× {item.count}</span>
-          </li>
-        ))}
-      </ul>
-    </>
+  // Use the logic already in toolingLogic
+  const summary = summarizeAndSortStack(result.stack);
+
+  return (
+    <ul style={styles.list}>
+      {summary.map((item) => (
+        <li key={item.size} style={styles.listItem}>
+          <span style={{ fontWeight: "bold", color: "#2d3748" }}>
+            {item.size.toFixed(3)}"
+          </span>
+          <span style={{ color: "#718096" }}>
+            x {item.count}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }

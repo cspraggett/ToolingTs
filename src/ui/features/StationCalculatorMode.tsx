@@ -6,18 +6,12 @@ import { styles } from "../styles";
 
 export function StationCalculatorMode() {
   // === STATE: Machine Selection ===
-  // We store the ID, then look up the profile
   const [selectedMachineId, setSelectedMachineId] = useState(DEFAULT_MACHINE.id);
-
-  // Derived state: The actual machine object
   const currentMachine = MACHINES[selectedMachineId] || DEFAULT_MACHINE;
 
   // === STATE: Calculator Inputs ===
   const [cutSize, setCutSize] = useState("");
-
-  // Default knife to the first one available on this machine
   const [knifeSize, setKnifeSize] = useState(currentMachine.knives[0].toString());
-
   const [clearance, setClearance] = useState("0.008");
   const [minusTol, setMinusTol] = useState("0.000");
   const [plusTol, setPlusTol] = useState("0.005");
@@ -27,12 +21,15 @@ export function StationCalculatorMode() {
   const [calculatedTargets, setCalculatedTargets] = useState<{ male: number, female: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // === EFFECT: Reset Knife when Machine Changes ===
-  // If we switch from Slitter 3 (0.500) to Slitter 4 (0.375), 
-  // we must update the knife selection immediately.
+  // === EFFECT: Reset Knife & Strict Mode when Machine Changes ===
   useEffect(() => {
     setKnifeSize(currentMachine.knives[0].toString());
+    // Always turn off strict mode when switching machines to avoid confusion
+    setStrictMode(false);
   }, [currentMachine]);
+
+  // Helper: Only Slitter 3 has the "Risky" tools (.031 / .062)
+  const isStrictCapable = currentMachine.tools.includes(.031);
 
   const handleCalculate = () => {
     setError(null);
@@ -62,14 +59,12 @@ export function StationCalculatorMode() {
 
     setCalculatedTargets({ male: nominalMale, female: nominalFemale });
 
-    // === SOLVER CALL ===
-    // Now passes 'currentMachine' instead of DEFAULT_MACHINE
     const bestResult = findBestDualSetup(
       nominalMale,
       nominalFemale,
       { minus: m, plus: p },
       currentMachine,
-      { strictMode: strictMode }
+      { strictMode: isStrictCapable && strictMode } // Only apply if capable
     );
 
     setResult(bestResult);
@@ -114,7 +109,6 @@ export function StationCalculatorMode() {
         <div style={styles.flexRow}>
           <div style={{ flex: 1 }}>
             <label style={styles.label}>Knife Size</label>
-            {/* CHANGED: Dropdown for Knives */}
             <select
               value={knifeSize}
               onChange={(e) => setKnifeSize(e.target.value)}
@@ -151,19 +145,21 @@ export function StationCalculatorMode() {
           </div>
         </div>
 
-        {/* CHECKBOX */}
-        <div style={{ marginTop: "1rem", display: "flex", alignItems: "center" }}>
-          <input
-            type="checkbox"
-            id="strictMode"
-            checked={strictMode}
-            onChange={(e) => setStrictMode(e.target.checked)}
-            style={{ width: "20px", height: "20px", marginRight: "10px" }}
-          />
-          <label htmlFor="strictMode" style={{ fontSize: "1rem", cursor: "pointer" }}>
-            <strong>Tight Clearance</strong> (Ban .031 & .062)
-          </label>
-        </div>
+        {/* CHECKBOX: HIDDEN FOR SLITTER 4 */}
+        {isStrictCapable && (
+          <div style={{ marginTop: "1rem", display: "flex", alignItems: "center" }}>
+            <input
+              type="checkbox"
+              id="strictMode"
+              checked={strictMode}
+              onChange={(e) => setStrictMode(e.target.checked)}
+              style={{ width: "20px", height: "20px", marginRight: "10px" }}
+            />
+            <label htmlFor="strictMode" style={{ fontSize: "1rem", cursor: "pointer" }}>
+              <strong>Tight Clearance</strong> (Ban .031 & .062)
+            </label>
+          </div>
+        )}
 
         {/* BUTTONS */}
         <div style={{ display: "flex", gap: "10px", marginTop: "1rem" }}>

@@ -1,5 +1,4 @@
 // src/core/optimizer.ts
-import * as R from 'remeda';
 import { MachineProfile } from '../config/machine-profiles';
 import { findToolingSetup, SolverResult, SolverOptions } from './solver';
 

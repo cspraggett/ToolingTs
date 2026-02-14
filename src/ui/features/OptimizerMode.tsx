@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
-import { findBestDualSetup, type DualOptimizationResult } from "../../core/optimizer";
+// UPDATED IMPORT:
+import { findBestDualSetup, DualOptimizationResult } from "../../core/optimizer";
+import { DEFAULT_MACHINE } from "../../config/machine-profiles";
 import { ResultDisplay } from "../components/ResultDisplay";
 import { styles } from "../styles";
 
@@ -7,7 +9,6 @@ export function OptimizerMode() {
   const [male, setMale] = useState("");
   const [female, setFemale] = useState("");
 
-  // Set default min tolerance to 0.000 as requested
   const [minusTol, setMinusTol] = useState("0.000");
   const [plusTol, setPlusTol] = useState("0.005");
 
@@ -19,7 +20,13 @@ export function OptimizerMode() {
 
     if (isNaN(m) || isNaN(f) || m <= 0 || f <= 0) return null;
 
-    return findBestDualSetup(m, f, min, p);
+    // FIX: Pass tolerance as object and include the machine profile
+    return findBestDualSetup(
+      m,
+      f,
+      { minus: min, plus: p },
+      DEFAULT_MACHINE
+    );
   }, [male, female, plusTol, minusTol]);
 
   return (

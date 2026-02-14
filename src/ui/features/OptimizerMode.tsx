@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { findBestDualSetup, type DualOptimizationResult } from "./toolingLogic";
-import { ResultDisplay } from "./ResultDisplay";
-import { styles } from "./styles";
+import { findBestDualSetup, type DualOptimizationResult } from "../../core/optimizer";
+import { ResultDisplay } from "../components/ResultDisplay";
+import { styles } from "../styles";
 
 export function OptimizerMode() {
   const [male, setMale] = useState("");

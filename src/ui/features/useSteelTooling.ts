@@ -1,5 +1,4 @@
 import { useState, useMemo, ChangeEvent } from "react";
-import { findExactSteelSetup, type ToolingSetup } from "./toolingLogic";
 
 export function useSteelTooling() {
   // 1. Manage the raw input state

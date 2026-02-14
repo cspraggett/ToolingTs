@@ -1,15 +1,18 @@
-import { ToolingSetup, summarizeAndSortStack } from "./toolingLogic";
-import { styles } from "./styles";
+// src/ResultDisplay.tsx
+import { summarizeStack } from "../../core/utils"; // <--- NEW IMPORT
+import { SolverResult } from "../../core/solver";  // <--- NEW IMPORT
+import { styles } from "../styles";
 
 interface ResultDisplayProps {
-  result: ToolingSetup;
+  result: SolverResult; // Updated type
 }
 
 export function ResultDisplay({ result }: ResultDisplayProps) {
+  // Guard clause
   if (!result || !result.stack) return null;
 
-  // Use the logic already in toolingLogic
-  const summary = summarizeAndSortStack(result.stack);
+  // Use the new pure function
+  const summary = summarizeStack(result.stack);
 
   return (
     <ul style={styles.list}>

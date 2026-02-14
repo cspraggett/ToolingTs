@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { findBestDualSetup, type DualOptimizationResult } from "./toolingLogic";
-import { ResultDisplay } from "./ResultDisplay";
-import { styles } from "./styles";
+import { findBestDualSetup, type DualOptimizationResult } from "../../core/optimizer"
+import { DEFAULT_MACHINE } from "../../config/machine-profiles";
+import { ResultDisplay } from "../components/ResultDisplay";
+import { styles } from "../styles";
 
 export function StationCalculatorMode() {
   const [cutSize, setCutSize] = useState("");
@@ -9,8 +10,6 @@ export function StationCalculatorMode() {
   const [clearance, setClearance] = useState("0.008");
   const [minusTol, setMinusTol] = useState("0.000");
   const [plusTol, setPlusTol] = useState("0.005");
-
-  // NEW: Checkbox State
   const [strictMode, setStrictMode] = useState(false);
 
   const [result, setResult] = useState<DualOptimizationResult | null>(null);
@@ -44,10 +43,14 @@ export function StationCalculatorMode() {
     }
 
     setCalculatedTargets({ male: nominalMale, female: nominalFemale });
+    const bestResult = findBestDualSetup(
+      nominalMale,
+      nominalFemale,
+      { minus: m, plus: p },
+      DEFAULT_MACHINE,
+      { strictMode: strictMode }
+    );
 
-    // PASS THE STRICT MODE FLAG
-    // If Checked (True) -> useRiskyTools = False (Don't use them)
-    const bestResult = findBestDualSetup(nominalMale, nominalFemale, m, p, !strictMode);
     setResult(bestResult);
   };
 

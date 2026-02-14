@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useSteelTooling } from "./useSteelTooling";
-import { styles } from "./styles";
-import { ResultDisplay } from "./ResultDisplay";
-import { OptimizerMode } from "./OptimizerMode";
-import { StationCalculatorMode } from "./StationCalculatorMode";
+import { useSteelTooling } from "./ui/features/useSteelTooling";
+import { styles } from "./ui/styles";
+import { ResultDisplay } from "./ui/components/ResultDisplay";
+import { OptimizerMode } from "./ui/features/OptimizerMode";
+import { StationCalculatorMode } from "./ui/features/StationCalculatorMode";
 
 export default function SteelToolingCalculator() {
   const [mode, setMode] = useState<"single" | "optimizer" | "station">("single");

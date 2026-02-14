@@ -1,0 +1,265 @@
+/* ===========================
+   Steel Tooling Calculator
+   CSS Modules Stylesheet
+   =========================== */
+
+/* === LAYOUT === */
+
+.container {
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 1rem;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+}
+
+.flexRow {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.flex1 {
+  flex: 1;
+}
+
+/* === TYPOGRAPHY === */
+
+.title {
+  margin-bottom: 0.75rem;
+}
+
+.helper {
+  opacity: 0.6;
+}
+
+.sectionTitle {
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.sectionTitleFlush {
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-top: 0;
+  text-align: left;
+}
+
+/* === INPUTS === */
+
+.input {
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 0.6rem;
+  text-align: center;
+  margin-bottom: 0.75rem;
+  box-sizing: border-box;
+}
+
+.inputNoMargin {
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 0.6rem;
+  text-align: center;
+  margin-bottom: 0;
+  box-sizing: border-box;
+}
+
+.selectInput {
+  width: 100%;
+  font-size: 1.1rem;
+  padding: 0.6rem;
+  text-align: left;
+  margin-bottom: 0;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  color: #666;
+  text-align: left;
+  margin-bottom: 0.2rem;
+}
+
+/* === TABS === */
+
+.tabContainer {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.tabButton {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.tabButtonActive {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: bold;
+  color: #007bff;
+  border-bottom: 3px solid #007bff;
+}
+
+/* === OPTIMIZER BANNER === */
+
+.recommendationBox {
+  background-color: #e6fffa;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #b2f5ea;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.recTitle {
+  margin: 0;
+  font-weight: bold;
+  color: #2c7a7b;
+}
+
+.recValue {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #234e52;
+}
+
+.recCount {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+
+/* === RESULT LISTS === */
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin-top: 0.75rem;
+}
+
+.listItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid #ddd;
+  font-size: 1.05rem;
+}
+
+.listItemSize {
+  font-weight: bold;
+  color: #2d3748;
+}
+
+.listItemCount {
+  color: #718096;
+}
+
+/* === BUTTONS === */
+
+.buttonRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.btnReset {
+  flex: 1;
+  padding: 0.75rem;
+  background-color: #e2e8f0;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.btnCalculate {
+  flex: 2;
+  padding: 0.75rem;
+  background-color: #3182ce;
+  color: white;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+/* === STATION CALCULATOR === */
+
+.machineSelector {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.inputSection {
+  margin-bottom: 1.5rem;
+}
+
+.toleranceRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+  margin-bottom: 10px;
+}
+
+.checkboxRow {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+}
+
+.checkboxLabel {
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.errorMessage {
+  color: red;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+.resultsArea {
+  text-align: left;
+}
+
+.sectionBlock {
+  border-bottom: 2px solid #eee;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.sectionHeader {
+  margin: 0 0 0.5rem;
+}
+
+.targetInfo {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+/* Optimizer-specific spacing */
+.flexRowSpaced {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}

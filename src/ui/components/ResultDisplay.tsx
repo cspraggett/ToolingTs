@@ -1,27 +1,24 @@
-// src/ResultDisplay.tsx
-import { summarizeStack } from "../../core/utils"; // <--- NEW IMPORT
-import { SolverResult } from "../../core/solver";  // <--- NEW IMPORT
-import { styles } from "../styles";
+import { summarizeStack } from "../../core/utils";
+import { SolverResult } from "../../core/solver";
+import styles from "../styles.module.css";
 
 interface ResultDisplayProps {
-  result: SolverResult; // Updated type
+  result: SolverResult;
 }
 
 export function ResultDisplay({ result }: ResultDisplayProps) {
-  // Guard clause
   if (!result || !result.stack) return null;
 
-  // Use the new pure function
   const summary = summarizeStack(result.stack);
 
   return (
-    <ul style={styles.list}>
+    <ul className={styles.list}>
       {summary.map((item) => (
-        <li key={item.size} style={styles.listItem}>
-          <span style={{ fontWeight: "bold", color: "#2d3748" }}>
+        <li key={item.size} className={styles.listItem}>
+          <span className={styles.listItemSize}>
             {item.size.toFixed(3)}"
           </span>
-          <span style={{ color: "#718096" }}>
+          <span className={styles.listItemCount}>
             x {item.count}
           </span>
         </li>

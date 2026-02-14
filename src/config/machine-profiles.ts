@@ -2,7 +2,8 @@ export interface MachineProfile {
   id: string;
   name: string;
   tools: number[];
-  knives: number[]; // <--- NEW: List of valid knife sizes
+  knives: number[];
+  clearanceOnly?: number[];
 }
 
 // === SLITTER 3 (Current Workstation) ===
@@ -34,7 +35,8 @@ export const SLITTER_4: MachineProfile = {
     0.0505, // Regrind Compensator
     0.0500
   ],
-  knives: [0.375] // <--- Single standard knife
+  knives: [0.375],
+  clearanceOnly: [0.0505]
 };
 
 // === REGISTRY ===

@@ -30,7 +30,12 @@ const getActiveTools = (profile: MachineProfile, isStrict: boolean): Tool[] => {
     tools = tools.filter(size => size !== 0.031 && size !== 0.062);
   }
 
-  // 2. Map & Sort (Largest to Smallest)
+  // 2. Filter Clearance-Only Tools
+  if (profile.clearanceOnly?.length) {
+    tools = tools.filter(size => !profile.clearanceOnly!.includes(size));
+  }
+
+  // 3. Map & Sort (Largest to Smallest)
   return tools
     .map(size => ({ size, units: inchesToUnits(size) }))
     .sort((a, b) => b.units - a.units);

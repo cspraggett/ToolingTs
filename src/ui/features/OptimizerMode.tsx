@@ -1,9 +1,8 @@
 import { useState, useMemo } from "react";
-// UPDATED IMPORT:
 import { findBestDualSetup, DualOptimizationResult } from "../../core/optimizer";
 import { DEFAULT_MACHINE } from "../../config/machine-profiles";
 import { ResultDisplay } from "../components/ResultDisplay";
-import { styles } from "../styles";
+import styles from "../styles.module.css";
 
 export function OptimizerMode() {
   const [male, setMale] = useState("");
@@ -20,7 +19,6 @@ export function OptimizerMode() {
 
     if (isNaN(m) || isNaN(f) || m <= 0 || f <= 0) return null;
 
-    // FIX: Pass tolerance as object and include the machine profile
     return findBestDualSetup(
       m,
       f,
@@ -32,14 +30,14 @@ export function OptimizerMode() {
   return (
     <div>
       {/* INPUT ROW 1: DIMENSIONS */}
-      <div style={styles.flexRow}>
+      <div className={styles.flexRow}>
         <input
           type="number"
           step="0.001"
           placeholder="Male Size"
           value={male}
           onChange={(e) => setMale(e.target.value)}
-          style={{ ...styles.input, marginBottom: 0 }}
+          className={styles.inputNoMargin}
         />
         <input
           type="number"
@@ -47,54 +45,54 @@ export function OptimizerMode() {
           placeholder="Female Size"
           value={female}
           onChange={(e) => setFemale(e.target.value)}
-          style={{ ...styles.input, marginBottom: 0 }}
+          className={styles.inputNoMargin}
         />
       </div>
 
       {/* INPUT ROW 2: TOLERANCE */}
-      <div style={{ ...styles.flexRow, marginBottom: "1.5rem" }}>
-        <div style={{ flex: 1 }}>
-          <label style={styles.label}>Minus (-)</label>
+      <div className={styles.flexRowSpaced}>
+        <div className={styles.flex1}>
+          <label className={styles.label}>Minus (-)</label>
           <input
             type="number"
             step="0.001"
             value={minusTol}
             onChange={(e) => setMinusTol(e.target.value)}
-            style={{ ...styles.input, marginBottom: 0 }}
+            className={styles.inputNoMargin}
           />
         </div>
-        <div style={{ flex: 1 }}>
-          <label style={styles.label}>Plus (+)</label>
+        <div className={styles.flex1}>
+          <label className={styles.label}>Plus (+)</label>
           <input
             type="number"
             step="0.001"
             value={plusTol}
             onChange={(e) => setPlusTol(e.target.value)}
-            style={{ ...styles.input, marginBottom: 0 }}
+            className={styles.inputNoMargin}
           />
         </div>
       </div>
 
       {/* RESULTS AREA */}
       {!result ? (
-        <p style={styles.helper}>Enter sizes to optimize setup</p>
+        <p className={styles.helper}>Enter sizes to optimize setup</p>
       ) : (
-        <div style={{ textAlign: "left" }}>
+        <div className={styles.resultsArea}>
           {/* THE RECOMMENDATION BANNER */}
-          <div style={styles.recommendationBox}>
-            <p style={styles.recTitle}>Recommended Offset:</p>
-            <p style={styles.recValue}>
+          <div className={styles.recommendationBox}>
+            <p className={styles.recTitle}>Recommended Offset:</p>
+            <p className={styles.recValue}>
               {result.offset > 0 ? "+" : ""}{result.offset.toFixed(3)}"
             </p>
-            <p style={styles.recCount}>
+            <p className={styles.recCount}>
               Total Tools: <strong>{result.totalToolCount}</strong>
             </p>
           </div>
 
-          <h3 style={{ ...styles.sectionTitle, marginTop: 0 }}>Male Setup</h3>
+          <h3 className={styles.sectionTitleFlush}>Male Setup</h3>
           <ResultDisplay result={result.maleResult} />
 
-          <h3 style={styles.sectionTitle}>Female Setup</h3>
+          <h3 className={styles.sectionTitle}>Female Setup</h3>
           <ResultDisplay result={result.femaleResult} />
         </div>
       )}

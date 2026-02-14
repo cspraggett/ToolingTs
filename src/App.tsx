@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useSteelTooling } from "./ui/features/useSteelTooling";
-import { styles } from "./ui/styles";
+import styles from "./ui/styles.module.css";
 import { ResultDisplay } from "./ui/components/ResultDisplay";
 import { OptimizerMode } from "./ui/features/OptimizerMode";
 import { StationCalculatorMode } from "./ui/features/StationCalculatorMode";
@@ -10,36 +10,25 @@ export default function SteelToolingCalculator() {
   const singleTools = useSteelTooling();
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Steel Tooling Calculator</h2>
+    <div className={styles.container}>
+      <h2 className={styles.title}>Steel Tooling Calculator</h2>
 
-      {/* CLEAN TAB SWITCHER */}
-      <div style={styles.tabContainer}>
+      <div className={styles.tabContainer}>
         <button
           onClick={() => setMode("single")}
-          // If mode is single, merge 'tabButton' with 'tabButtonActive'
-          style={{
-            ...styles.tabButton,
-            ...(mode === "single" ? styles.tabButtonActive : {})
-          }}
+          className={mode === "single" ? styles.tabButtonActive : styles.tabButton}
         >
           Single
         </button>
         <button
           onClick={() => setMode("optimizer")}
-          style={{
-            ...styles.tabButton,
-            ...(mode === "optimizer" ? styles.tabButtonActive : {})
-          }}
+          className={mode === "optimizer" ? styles.tabButtonActive : styles.tabButton}
         >
           Optimizer
         </button>
         <button
           onClick={() => setMode("station")}
-          style={{
-            ...styles.tabButton,
-            ...(mode === "station" ? styles.tabButtonActive : {})
-          }}
+          className={mode === "station" ? styles.tabButtonActive : styles.tabButton}
         >
           Station
         </button>
@@ -53,11 +42,11 @@ export default function SteelToolingCalculator() {
             placeholder='Target width (")'
             value={singleTools.targetWidth}
             onChange={singleTools.handleInputChange}
-            style={styles.input}
+            className={styles.input}
           />
 
           {!singleTools.result ? (
-            <p style={styles.helper}>Enter a width to calculate tooling</p>
+            <p className={styles.helper}>Enter a width to calculate tooling</p>
           ) : (
             <ResultDisplay result={singleTools.result} />
           )}

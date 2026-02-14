@@ -1,5 +1,10 @@
 import { Tool } from './solver';
 
+// --- Shared Unit Conversion ---
+const UNITS_PER_INCH = 1000;
+export const inchesToUnits = (inches: number) => Math.round(inches * UNITS_PER_INCH);
+export const unitsToInches = (units: number) => units / UNITS_PER_INCH;
+
 export interface ToolSummary {
   size: number;
   count: number;

@@ -1,4 +1,3 @@
-// src/core/solver.test.ts
 import { describe, it, expect } from 'vitest';
 import { findToolingSetup } from './solver';
 import { DEFAULT_MACHINE, SLITTER_4 } from '../config/machine-profiles';

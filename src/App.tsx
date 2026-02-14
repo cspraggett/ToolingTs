@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useSteelTooling } from "./ui/features/useSteelTooling";
 import styles from "./ui/styles.module.css";
 import { ResultDisplay } from "./ui/components/ResultDisplay";
-import { OptimizerMode } from "./ui/features/OptimizerMode";
 import { StationCalculatorMode } from "./ui/features/StationCalculatorMode";
 
 export default function SteelToolingCalculator() {
-  const [mode, setMode] = useState<"single" | "optimizer" | "station">("single");
+  const [mode, setMode] = useState<"single" | "makeCut">("single");
   const singleTools = useSteelTooling();
 
   return (
@@ -21,16 +20,10 @@ export default function SteelToolingCalculator() {
           Single
         </button>
         <button
-          onClick={() => setMode("optimizer")}
-          className={mode === "optimizer" ? styles.tabButtonActive : styles.tabButton}
+          onClick={() => setMode("makeCut")}
+          className={mode === "makeCut" ? styles.tabButtonActive : styles.tabButton}
         >
-          Optimizer
-        </button>
-        <button
-          onClick={() => setMode("station")}
-          className={mode === "station" ? styles.tabButtonActive : styles.tabButton}
-        >
-          Station
+          Make Cut
         </button>
       </div>
 
@@ -51,8 +44,6 @@ export default function SteelToolingCalculator() {
             <ResultDisplay result={singleTools.result} />
           )}
         </>
-      ) : mode === "optimizer" ? (
-        <OptimizerMode />
       ) : (
         <StationCalculatorMode />
       )}

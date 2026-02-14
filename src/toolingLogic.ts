@@ -1,3 +1,4 @@
+import { DEFAULT_MACHINE } from "./config/machine-profiles";
 /* =========================
    TYPES & INTERFACES
 ========================= */
@@ -24,12 +25,7 @@ const UNITS_PER_INCH = 1000;
 const inchesToUnits = (inches: number): number =>
   Math.round(inches * UNITS_PER_INCH);
 
-// YOUR SPECIFIC TOOL LIST
-const steelToolingSizes: number[] = [
-  3, 2, 1, 0.875, 0.75, 0.625, 0.5, 0.4, 0.375,
-  0.3, 0.26, 0.257, 0.255, 0.253, 0.252, 0.251, 0.25,
-  0.24, 0.2, 0.125, 0.1, 0.062, 0.05, 0.031
-];
+const steelToolingSizes = DEFAULT_MACHINE.tools;
 
 /* =========================
    SOLVER LOGIC

@@ -2,21 +2,45 @@ export interface MachineProfile {
   id: string;
   name: string;
   tools: number[];
+  knives: number[]; // <--- NEW: List of valid knife sizes
 }
 
-export const DEFAULT_MACHINE: MachineProfile = {
-  id: "slitter-1",
-  name: "Standard Slitter",
+// === SLITTER 3 (Current Workstation) ===
+export const SLITTER_3: MachineProfile = {
+  id: "slitter-3",
+  name: "Slitter 3",
   tools: [
     3, 2, 1,
     0.875, 0.75, 0.625, 0.5, 0.4, 0.375, 0.3,
     0.26, 0.257, 0.255, 0.253, 0.252, 0.251, 0.25, 0.24,
     0.2, 0.125, 0.1,
     0.062, 0.05, 0.031
-  ]
+  ],
+  knives: [0.243, 0.365, 0.480] // <--- Specific Knives
 };
 
-// This is where we will add the new machine later
-export const MACHINES: Record<string, MachineProfile> = {
-  [DEFAULT_MACHINE.id]: DEFAULT_MACHINE,
+// === SLITTER 4 (New Workstation) ===
+export const SLITTER_4: MachineProfile = {
+  id: "slitter-4",
+  name: "Slitter 4",
+  tools: [
+    // Standard Spacers
+    3.0000, 2.0000, 1.0000,
+    0.8000, 0.4000, 0.2000, 0.1000,
+
+    // Precision Spacers
+    0.0750, 0.0650, 0.0580,
+    0.0540, 0.0520, 0.0510,
+    0.0505, // Regrind Compensator
+    0.0500
+  ],
+  knives: [0.375] // <--- Single standard knife
 };
+
+// === REGISTRY ===
+export const MACHINES: Record<string, MachineProfile> = {
+  [SLITTER_3.id]: SLITTER_3,
+  [SLITTER_4.id]: SLITTER_4,
+};
+
+export const DEFAULT_MACHINE = SLITTER_3;

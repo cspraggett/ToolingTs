@@ -1,12 +1,23 @@
-import { useState } from "react";
-import { findBestDualSetup, type DualOptimizationResult } from "../../core/optimizer"
-import { DEFAULT_MACHINE } from "../../config/machine-profiles";
+import { useState, useEffect } from "react";
+import { findBestDualSetup, DualOptimizationResult } from "../../core/optimizer";
+import { MACHINES, DEFAULT_MACHINE } from "../../config/machine-profiles";
 import { ResultDisplay } from "../components/ResultDisplay";
 import { styles } from "../styles";
 
 export function StationCalculatorMode() {
+  // === STATE: Machine Selection ===
+  // We store the ID, then look up the profile
+  const [selectedMachineId, setSelectedMachineId] = useState(DEFAULT_MACHINE.id);
+
+  // Derived state: The actual machine object
+  const currentMachine = MACHINES[selectedMachineId] || DEFAULT_MACHINE;
+
+  // === STATE: Calculator Inputs ===
   const [cutSize, setCutSize] = useState("");
-  const [knifeSize, setKnifeSize] = useState("0.500");
+
+  // Default knife to the first one available on this machine
+  const [knifeSize, setKnifeSize] = useState(currentMachine.knives[0].toString());
+
   const [clearance, setClearance] = useState("0.008");
   const [minusTol, setMinusTol] = useState("0.000");
   const [plusTol, setPlusTol] = useState("0.005");
@@ -15,6 +26,13 @@ export function StationCalculatorMode() {
   const [result, setResult] = useState<DualOptimizationResult | null>(null);
   const [calculatedTargets, setCalculatedTargets] = useState<{ male: number, female: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // === EFFECT: Reset Knife when Machine Changes ===
+  // If we switch from Slitter 3 (0.500) to Slitter 4 (0.375), 
+  // we must update the knife selection immediately.
+  useEffect(() => {
+    setKnifeSize(currentMachine.knives[0].toString());
+  }, [currentMachine]);
 
   const handleCalculate = () => {
     setError(null);
@@ -43,11 +61,14 @@ export function StationCalculatorMode() {
     }
 
     setCalculatedTargets({ male: nominalMale, female: nominalFemale });
+
+    // === SOLVER CALL ===
+    // Now passes 'currentMachine' instead of DEFAULT_MACHINE
     const bestResult = findBestDualSetup(
       nominalMale,
       nominalFemale,
       { minus: m, plus: p },
-      DEFAULT_MACHINE,
+      currentMachine,
       { strictMode: strictMode }
     );
 
@@ -56,8 +77,6 @@ export function StationCalculatorMode() {
 
   const handleReset = () => {
     setCutSize("");
-    setKnifeSize("0.500");
-    setClearance("0.008");
     setResult(null);
     setError(null);
     setCalculatedTargets(null);
@@ -65,7 +84,22 @@ export function StationCalculatorMode() {
 
   return (
     <div>
-      {/* INPUTS */}
+      {/* === MACHINE SELECTOR === */}
+      <div style={{ marginBottom: "1rem", textAlign: "left" }}>
+        <label style={styles.label}>Select Workstation</label>
+        <select
+          value={selectedMachineId}
+          onChange={(e) => setSelectedMachineId(e.target.value)}
+          style={{ ...styles.input, textAlign: "left", cursor: "pointer" }}
+        >
+          {Object.values(MACHINES).map((machine) => (
+            <option key={machine.id} value={machine.id}>
+              {machine.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div style={{ marginBottom: "1.5rem" }}>
         <label style={styles.label}>Strip Width (Cut Size)</label>
         <input
@@ -80,13 +114,18 @@ export function StationCalculatorMode() {
         <div style={styles.flexRow}>
           <div style={{ flex: 1 }}>
             <label style={styles.label}>Knife Size</label>
-            <input
-              type="number"
-              step="0.001"
+            {/* CHANGED: Dropdown for Knives */}
+            <select
               value={knifeSize}
               onChange={(e) => setKnifeSize(e.target.value)}
-              style={{ ...styles.input, marginBottom: 0 }}
-            />
+              style={{ ...styles.input, marginBottom: 0, cursor: "pointer" }}
+            >
+              {currentMachine.knives.map((k) => (
+                <option key={k} value={k}>
+                  {k.toFixed(3)}"
+                </option>
+              ))}
+            </select>
           </div>
           <div style={{ flex: 1 }}>
             <label style={styles.label}>Clearance</label>

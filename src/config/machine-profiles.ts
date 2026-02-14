@@ -4,6 +4,7 @@ export interface MachineProfile {
   tools: number[];
   knives: number[];
   clearanceOnly?: number[];
+  strictExclude?: number[];
 }
 
 // === SLITTER 3 (Current Workstation) ===
@@ -17,7 +18,8 @@ export const SLITTER_3: MachineProfile = {
     0.2, 0.125, 0.1,
     0.062, 0.05, 0.031
   ],
-  knives: [0.243, 0.365, 0.480] // <--- Specific Knives
+  knives: [0.243, 0.365, 0.480],
+  strictExclude: [0.031, 0.062]
 };
 
 // === SLITTER 4 (New Workstation) ===

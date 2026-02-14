@@ -1,11 +1,10 @@
-// src/core/optimizer.ts
 import { MachineProfile } from '../config/machine-profiles';
 import { findToolingSetup, SolverResult, SolverOptions } from './solver';
+import { inchesToUnits, unitsToInches } from './utils';
 
-// --- Types ---
 export interface ToleranceWindow {
-  minus: number; // e.g., 0.002
-  plus: number;  // e.g., 0.005
+  minus: number;
+  plus: number;
 }
 
 export interface DualOptimizationResult {
@@ -15,17 +14,6 @@ export interface DualOptimizationResult {
   totalToolCount: number;
 }
 
-// --- Helpers ---
-const PRECISION = 1000;
-const toUnits = (n: number) => Math.round(n * PRECISION);
-const toInches = (n: number) => n / PRECISION;
-
-/**
- * Pure Optimizer Function
- * 1. Generates a range of offsets based on tolerance.
- * 2. Calculates setups for Male/Female at each offset.
- * 3. Returns the setup with the LOWEST total tool count.
- */
 export function findBestDualSetup(
   maleTarget: number,
   femaleTarget: number,
@@ -34,22 +22,19 @@ export function findBestDualSetup(
   options: SolverOptions = {}
 ): DualOptimizationResult | null {
 
-  const minUnits = toUnits(tolerance.minus);
-  const maxUnits = toUnits(tolerance.plus);
+  const minUnits = inchesToUnits(tolerance.minus);
+  const maxUnits = inchesToUnits(tolerance.plus);
 
-  // Safety Break
   if (minUnits > 500 || maxUnits > 500) return null;
 
-  // 1. Generate all possible offsets (Imperative loop is cleaner/faster here than mapping array)
   let bestResult: DualOptimizationResult | null = null;
 
   for (let offsetUnits = -minUnits; offsetUnits <= maxUnits; offsetUnits++) {
-    const offset = toInches(offsetUnits);
+    const offset = unitsToInches(offsetUnits);
 
     const candidateMale = maleTarget + offset;
     const candidateFemale = femaleTarget + offset;
 
-    // Use the pure solver we just wrote!
     const solM = findToolingSetup(candidateMale, machine, options);
     const solF = findToolingSetup(candidateFemale, machine, options);
 
@@ -57,7 +42,6 @@ export function findBestDualSetup(
 
     const currentCount = solM.stack.length + solF.stack.length;
 
-    // 2. Optimization Strategy: Lowest Tool Count Wins
     let isBetter = false;
     if (!bestResult) {
       isBetter = true;

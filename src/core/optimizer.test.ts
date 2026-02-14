@@ -1,6 +1,5 @@
-// src/core/optimizer.test.ts
 import { describe, it, expect } from 'vitest';
-import { findBestDualSetup } from './optimizer'; // We haven't created this yet!
+import { findBestDualSetup } from './optimizer';
 import { DEFAULT_MACHINE } from '../config/machine-profiles';
 
 describe('Dual Setup Optimizer (Pure)', () => {

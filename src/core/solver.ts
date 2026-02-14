@@ -1,7 +1,6 @@
-// src/core/solver.ts
 import { MachineProfile } from '../config/machine-profiles';
+import { inchesToUnits } from './utils';
 
-// --- Types ---
 export interface Tool {
   size: number;
   units: number;
@@ -16,18 +15,12 @@ export interface SolverResult {
   stack: Tool[];
 }
 
-// --- Constants ---
-const UNITS_PER_INCH = 1000;
-const inchesToUnits = (inVal: number) => Math.round(inVal * UNITS_PER_INCH);
-
-// --- The Pure Core ---
-
 const getActiveTools = (profile: MachineProfile, isStrict: boolean): Tool[] => {
   let tools = profile.tools;
 
   // 1. Filter Strict Mode
-  if (isStrict) {
-    tools = tools.filter(size => size !== 0.031 && size !== 0.062);
+  if (isStrict && profile.strictExclude?.length) {
+    tools = tools.filter(size => !profile.strictExclude!.includes(size));
   }
 
   // 2. Filter Clearance-Only Tools
@@ -40,8 +33,6 @@ const getActiveTools = (profile: MachineProfile, isStrict: boolean): Tool[] => {
     .map(size => ({ size, units: inchesToUnits(size) }))
     .sort((a, b) => b.units - a.units);
 };
-
-// ... (Rest of logic is pure JS/TS loops, so it is safe) ...
 
 const solveDP = (targetUnits: number, inventory: Tool[]): Tool[] | null => {
   const dp: (Tool[] | null)[] = Array(targetUnits + 1).fill(null);

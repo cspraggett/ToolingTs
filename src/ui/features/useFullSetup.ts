@@ -1,6 +1,6 @@
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import { findBestDualSetup, DualOptimizationResult } from "../../core/optimizer";
-import { MACHINES, DEFAULT_MACHINE, MachineProfile } from "../../config/machine-profiles";
+import { MACHINES, DEFAULT_MACHINE } from "../../config/machine-profiles";
 import { computeCoilUsage, computeEdgeSpacers } from "../../core/utils";
 
 export interface StripEntry {
@@ -37,7 +37,7 @@ function makeStrip(): StripEntry {
 export function useFullSetup() {
   // === Machine Selection ===
   const [selectedMachineId, setSelectedMachineId] = useState(DEFAULT_MACHINE.id);
-  const currentMachine: MachineProfile = MACHINES[selectedMachineId] || DEFAULT_MACHINE;
+  const currentMachine = MACHINES[selectedMachineId] ?? DEFAULT_MACHINE;
 
   // === Inputs ===
   const [coilWidth, setCoilWidth] = useState("");
@@ -52,12 +52,6 @@ export function useFullSetup() {
   // === Results ===
   const [result, setResult] = useState<FullSetupResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Reset knife & strict mode when machine changes
-  useEffect(() => {
-    setKnifeSize(currentMachine.knives[0].toString());
-    setStrictMode(false);
-  }, [currentMachine]);
 
   const isStrictCapable = !!currentMachine.strictExclude?.length;
 
@@ -216,7 +210,13 @@ export function useFullSetup() {
   };
 
   // Input change helpers
-  const onMachineChange = (e: ChangeEvent<HTMLSelectElement>) => setSelectedMachineId(e.target.value);
+  const onMachineChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setSelectedMachineId(id);
+    const machine = MACHINES[id] ?? DEFAULT_MACHINE;
+    setKnifeSize(machine.knives[0].toString());
+    setStrictMode(false);
+  };
   const onCoilWidthChange = (e: ChangeEvent<HTMLInputElement>) => setCoilWidth(e.target.value);
   const onGaugeChange = (e: ChangeEvent<HTMLInputElement>) => setGauge(e.target.value);
   const onKnifeSizeChange = (e: ChangeEvent<HTMLSelectElement>) => setKnifeSize(e.target.value);

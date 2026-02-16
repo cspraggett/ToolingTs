@@ -11,7 +11,7 @@ function StackList({ stack }: { stack: Tool[] }) {
     <div className={styles.stackList}>
       {summary.map((s, i) => (
         <div key={i} className={styles.stackLine}>
-          {s.size.toFixed(3)}" x{s.count}
+          {s.count} x {s.size.toFixed(3)}"
         </div>
       ))}
     </div>
@@ -233,10 +233,34 @@ export function FullSetupMode() {
               )}
             </p>
             <p className={styles.recCount}>
-              Edge Spacer: <strong>{setup.result.edgeSpacer.toFixed(3)}"</strong> each side
-              {" | "}
               Edge Trim: <strong>{setup.result.edgeTrim.toFixed(3)}"</strong>
+              {" | "}
+              Setup Width: <strong>{setup.result.stripTotal.toFixed(3)}"</strong>
+              {!setup.result.shouldersValid && (
+                <span style={{ color: "red" }}> (Shoulders below 1"!)</span>
+              )}
             </p>
+          </div>
+
+          {/* Opening Shoulders */}
+          <div className={styles.cutCard}>
+            <div className={styles.cutCardHeader}>
+              <span><strong>Opening Shoulders</strong></span>
+            </div>
+            <div className={styles.cutCardBody}>
+              <div className={styles.cutCardSide}>
+                <div className={styles.cutCardSideTitle}>
+                  Bottom — {setup.result.bottomOpening.target.toFixed(3)}"
+                </div>
+                <StackList stack={setup.result.bottomOpening.stack} />
+              </div>
+              <div className={styles.cutCardSide}>
+                <div className={styles.cutCardSideTitle}>
+                  Top — {setup.result.topOpening.target.toFixed(3)}"
+                </div>
+                <StackList stack={setup.result.topOpening.stack} />
+              </div>
+            </div>
           </div>
 
           {/* Setup Sheet — one card per strip */}
@@ -267,6 +291,27 @@ export function FullSetupMode() {
               </div>
             </div>
           ))}
+
+          {/* Closing Shoulders */}
+          <div className={styles.cutCard}>
+            <div className={styles.cutCardHeader}>
+              <span><strong>Closing Shoulders</strong></span>
+            </div>
+            <div className={styles.cutCardBody}>
+              <div className={styles.cutCardSide}>
+                <div className={styles.cutCardSideTitle}>
+                  Bottom — {setup.result.bottomClosing.target.toFixed(3)}"
+                </div>
+                <StackList stack={setup.result.bottomClosing.stack} />
+              </div>
+              <div className={styles.cutCardSide}>
+                <div className={styles.cutCardSideTitle}>
+                  Top — {setup.result.topClosing.target.toFixed(3)}"
+                </div>
+                <StackList stack={setup.result.topClosing.stack} />
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

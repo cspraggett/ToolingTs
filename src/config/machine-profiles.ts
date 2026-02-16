@@ -1,3 +1,9 @@
+export interface KnifeClearanceOffset {
+  knifeSize: number;
+  bottom: (userClearance: number) => number;
+  top: (userClearance: number) => number;
+}
+
 export interface MachineProfile {
   id: string;
   name: string;
@@ -6,6 +12,7 @@ export interface MachineProfile {
   clearanceOnly?: number[];
   strictExclude?: number[];
   arborLength: number; // inches
+  knifeClearanceOffsets: KnifeClearanceOffset[];
 }
 
 // === SLITTER 3 (Current Workstation) ===
@@ -22,6 +29,11 @@ export const SLITTER_3: MachineProfile = {
   knives: [0.243, 0.365, 0.480],
   strictExclude: [0.031, 0.062],
   arborLength: 64,
+  knifeClearanceOffsets: [
+    { knifeSize: 0.365, bottom: (clr) => clr, top: () => 0 },
+    { knifeSize: 0.243, bottom: (clr) => clr + 0.003, top: () => 0 },
+    { knifeSize: 0.480, bottom: (clr) => clr <= 0.010 ? 0 : clr - 0.010, top: (clr) => clr <= 0.010 ? 0.010 - clr : 0 },
+  ],
 };
 
 // === SLITTER 4 (New Workstation) ===
@@ -42,6 +54,9 @@ export const SLITTER_4: MachineProfile = {
   knives: [0.375],
   clearanceOnly: [0.0505],
   arborLength: 67,
+  knifeClearanceOffsets: [
+    { knifeSize: 0.375, bottom: (clr) => clr, top: () => 0 },
+  ],
 };
 
 // === REGISTRY ===

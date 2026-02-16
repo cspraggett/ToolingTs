@@ -10,6 +10,35 @@ export interface ToolSummary {
   count: number;
 }
 
+export interface CoilUsage {
+  totalStrips: number;
+  totalKnives: number;
+  stripTotal: number;   // just strip widths (coil material)
+  arborUsed: number;    // strips + knives (physical arbor space)
+}
+
+export function computeCoilUsage(
+  strips: { width: number; quantity: number }[],
+  knifeWidth: number
+): CoilUsage {
+  const totalStrips = strips.reduce((sum, s) => sum + s.quantity, 0);
+  const totalKnives = totalStrips + 1;
+  const stripTotal = strips.reduce((sum, s) => sum + s.width * s.quantity, 0);
+  const arborUsed = stripTotal + totalKnives * knifeWidth;
+  return { totalStrips, totalKnives, stripTotal, arborUsed };
+}
+
+export function computeEdgeSpacers(
+  stripTotal: number,
+  arborUsed: number,
+  coilWidth: number,
+  arborLength: number
+): { edgeTrim: number; edgeSpacer: number } {
+  const edgeTrim = coilWidth - stripTotal;
+  const edgeSpacer = (arborLength - arborUsed) / 2;
+  return { edgeTrim, edgeSpacer };
+}
+
 export const summarizeStack = (stack: Tool[]): ToolSummary[] => {
   // 1. Group by size
   const counts: Record<string, number> = {};

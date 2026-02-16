@@ -25,7 +25,10 @@ export interface FullSetupResult {
   grandTotalTools: number;
   totalKnives: number;
   stripTotal: number;
+  orderNumber: string;
+  companyName: string;
   coilWidth: number;
+  coilWeight: string;
   gauge: string;
   edgeTrim: number;
   bottomOpening: SolverResult;
@@ -45,7 +48,10 @@ export function useFullSetup() {
   const currentMachine = MACHINES[selectedMachineId] ?? DEFAULT_MACHINE;
 
   // === Inputs ===
+  const [orderNumber, setOrderNumber] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [coilWidth, setCoilWidth] = useState("");
+  const [coilWeight, setCoilWeight] = useState("");
   const [gauge, setGauge] = useState("");
   const [knifeSize, setKnifeSize] = useState(currentMachine.knives[0].toString());
   const [clearance, setClearance] = useState("0.008");
@@ -222,7 +228,10 @@ export function useFullSetup() {
       grandTotalTools,
       totalKnives,
       stripTotal,
+      orderNumber,
+      companyName,
       coilWidth: cw,
+      coilWeight,
       gauge,
       edgeTrim,
       bottomOpening: solved.bottomOpening,
@@ -234,7 +243,10 @@ export function useFullSetup() {
   };
 
   const handleReset = () => {
+    setOrderNumber("");
+    setCompanyName("");
     setCoilWidth("");
+    setCoilWeight("");
     setGauge("");
     setStrips([makeStrip()]);
     setResult(null);
@@ -249,7 +261,10 @@ export function useFullSetup() {
     setKnifeSize(machine.knives[0].toString());
     setStrictMode(false);
   };
+  const onOrderNumberChange = (e: ChangeEvent<HTMLInputElement>) => setOrderNumber(e.target.value);
+  const onCompanyNameChange = (e: ChangeEvent<HTMLInputElement>) => setCompanyName(e.target.value);
   const onCoilWidthChange = (e: ChangeEvent<HTMLInputElement>) => setCoilWidth(e.target.value);
+  const onCoilWeightChange = (e: ChangeEvent<HTMLInputElement>) => setCoilWeight(e.target.value);
   const onGaugeChange = (e: ChangeEvent<HTMLInputElement>) => setGauge(e.target.value);
   const onKnifeSizeChange = (e: ChangeEvent<HTMLSelectElement>) => setKnifeSize(e.target.value);
   const onClearanceChange = (e: ChangeEvent<HTMLInputElement>) => setClearance(e.target.value);
@@ -262,8 +277,14 @@ export function useFullSetup() {
     onMachineChange,
 
     // Inputs
+    orderNumber,
+    onOrderNumberChange,
+    companyName,
+    onCompanyNameChange,
     coilWidth,
     onCoilWidthChange,
+    coilWeight,
+    onCoilWeightChange,
     gauge,
     onGaugeChange,
     knifeSize,

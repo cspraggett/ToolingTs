@@ -3,6 +3,14 @@
    CSS Modules Stylesheet
    =========================== */
 
+/* === FORCE LIGHT MODE === */
+
+:global(html) {
+  color-scheme: light;
+  background-color: #ffffff;
+  color: #000000;
+}
+
 /* === LAYOUT === */
 
 .container {
@@ -83,6 +91,7 @@
   color: #666;
   text-align: left;
   margin-bottom: 0.2rem;
+  padding-left: 0.4rem;
 }
 
 /* === TABS === */

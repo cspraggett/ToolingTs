@@ -19,13 +19,15 @@ const getActiveTools = (profile: MachineProfile, isStrict: boolean): Tool[] => {
   let tools = profile.tools;
 
   // 1. Filter Strict Mode
-  if (isStrict && profile.strictExclude?.length) {
-    tools = tools.filter(size => !profile.strictExclude!.includes(size));
+  const strictList = profile.strictExclude;
+  if (isStrict && strictList?.length) {
+    tools = tools.filter(size => !strictList.includes(size));
   }
 
   // 2. Filter Clearance-Only Tools
-  if (profile.clearanceOnly?.length) {
-    tools = tools.filter(size => !profile.clearanceOnly!.includes(size));
+  const clearanceList = profile.clearanceOnly;
+  if (clearanceList?.length) {
+    tools = tools.filter(size => !clearanceList.includes(size));
   }
 
   // 3. Map & Sort (Largest to Smallest)
@@ -35,7 +37,7 @@ const getActiveTools = (profile: MachineProfile, isStrict: boolean): Tool[] => {
 };
 
 const solveDP = (targetUnits: number, inventory: Tool[]): Tool[] | null => {
-  const dp: (Tool[] | null)[] = Array(targetUnits + 1).fill(null);
+  const dp: (Tool[] | null)[] = new Array<Tool[] | null>(targetUnits + 1).fill(null);
   dp[0] = [];
 
   for (let i = 0; i <= targetUnits; i++) {
@@ -86,7 +88,7 @@ export function findToolingSetup(
 
   const largestTool = activeTools[0];
 
-  if (remainingUnits > SAFE_BUFFER && largestTool) {
+  if (remainingUnits > SAFE_BUFFER) {
     while (remainingUnits > SAFE_BUFFER) {
       remainingUnits -= largestTool.units;
       bigStack.push(largestTool);

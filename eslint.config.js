@@ -17,6 +17,10 @@ export default defineConfig([
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
+    rules: {
+      '@typescript-eslint/no-confusing-void-expression': 'off',
+      '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+    },
     languageOptions: {
       parserOptions: {
         project: ['./tsconfig.node.json', './tsconfig.app.json'],

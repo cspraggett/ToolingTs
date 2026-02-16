@@ -107,20 +107,21 @@ export function useFullSetup() {
     }
 
     // Deduplicate by width (sum quantities, keep largest tolerance window)
-    const deduped = new Map<number, { quantity: number; minus: number; plus: number }>();
+    const deduped = new Map<string, { width: number; quantity: number; minus: number; plus: number }>();
     for (const { width, quantity, minus, plus } of parsed) {
-      const existing = deduped.get(width);
+      const key = width.toFixed(3);
+      const existing = deduped.get(key);
       if (existing) {
         existing.quantity += quantity;
         existing.minus = Math.max(existing.minus, minus);
         existing.plus = Math.max(existing.plus, plus);
       } else {
-        deduped.set(width, { quantity, minus, plus });
+        deduped.set(key, { width, quantity, minus, plus });
       }
     }
 
-    const uniqueStrips = Array.from(deduped.entries()).map(([width, val]) => ({
-      width,
+    const uniqueStrips = Array.from(deduped.values()).map((val) => ({
+      width: val.width,
       quantity: val.quantity,
       minus: val.minus,
       plus: val.plus,

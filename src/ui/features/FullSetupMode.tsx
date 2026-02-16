@@ -67,7 +67,7 @@ export function FullSetupMode() {
         </div>
 
         {/* Knife + Clearance */}
-        <div className={styles.flexRow} style={{ marginTop: "10px" }}>
+        <div className={styles.flexRowTop}>
           <div className={styles.flex1}>
             <label className={styles.label}>Knife Size</label>
             <select
@@ -112,8 +112,8 @@ export function FullSetupMode() {
 
         {/* === STRIP LIST === */}
         <div className={styles.stripListHeader}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <h3 style={{ margin: 0 }}>Strips</h3>
+          <div className={styles.stripListHeaderLeft}>
+            <h3>Strips</h3>
             <button
               type="button"
               onClick={() => setShowOptimizer((v) => !v)}
@@ -240,8 +240,8 @@ export function FullSetupMode() {
           </div>
 
           {/* Setup Sheet — one card per strip */}
-          {setup.result.stripResults.map((sr) => (
-            <div key={sr.stripWidth} className={styles.cutCard}>
+          {setup.result.stripResults.map((sr, i) => (
+            <div key={`${sr.stripWidth}-${i}`} className={styles.cutCard}>
               <div className={styles.cutCardHeader}>
                 <span><strong>{sr.stripWidth.toFixed(3)}"</strong> x{sr.quantity}</span>
                 {sr.dualResult.offset !== 0 && (

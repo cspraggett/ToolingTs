@@ -35,7 +35,7 @@ export function computeEdgeSpacers(
   arborLength: number
 ): { edgeTrim: number; edgeSpacer: number } {
   const edgeTrim = coilWidth - stripTotal;
-  const edgeSpacer = (arborLength - arborUsed) / 2;
+  const edgeSpacer = Math.max(0, (arborLength - arborUsed) / 2);
   return { edgeTrim, edgeSpacer };
 }
 

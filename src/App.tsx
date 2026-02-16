@@ -3,13 +3,16 @@ import { useSteelTooling } from "./ui/features/useSteelTooling";
 import styles from "./ui/styles.module.css";
 import { ResultDisplay } from "./ui/components/ResultDisplay";
 import { StationCalculatorMode } from "./ui/features/StationCalculatorMode";
+import { FullSetupMode } from "./ui/features/FullSetupMode";
+
+type Mode = "single" | "makeCut" | "fullSetup";
 
 export default function SteelToolingCalculator() {
-  const [mode, setMode] = useState<"single" | "makeCut">("single");
+  const [mode, setMode] = useState<Mode>("single");
   const singleTools = useSteelTooling();
 
   return (
-    <div className={styles.container}>
+    <div className={mode === "fullSetup" ? styles.containerWide : styles.container}>
       <h2 className={styles.title}>Steel Tooling Calculator</h2>
 
       <div className={styles.tabContainer}>
@@ -24,6 +27,12 @@ export default function SteelToolingCalculator() {
           className={mode === "makeCut" ? styles.tabButtonActive : styles.tabButton}
         >
           Make Cut
+        </button>
+        <button
+          onClick={() => setMode("fullSetup")}
+          className={mode === "fullSetup" ? styles.tabButtonActive : styles.tabButton}
+        >
+          Full Setup
         </button>
       </div>
 
@@ -44,8 +53,10 @@ export default function SteelToolingCalculator() {
             <ResultDisplay result={singleTools.result} />
           )}
         </>
-      ) : (
+      ) : mode === "makeCut" ? (
         <StationCalculatorMode />
+      ) : (
+        <FullSetupMode />
       )}
     </div>
   );

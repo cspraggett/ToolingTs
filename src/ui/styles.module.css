@@ -272,3 +272,134 @@
   gap: 10px;
   margin-bottom: 1.5rem;
 }
+
+/* === FULL SETUP === */
+
+.containerWide {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+}
+
+.btnToggle {
+  padding: 0.4rem 0.75rem;
+  background-color: #edf2f7;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.stripListHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.stripRow {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  margin-bottom: 6px;
+}
+
+.stripQtyCol {
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.stripTolCol {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.stripTolInput {
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 0.6rem 0.3rem;
+  text-align: center;
+  margin-bottom: 0;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+.btnRemoveSpacer {
+  width: 30px;
+  flex-shrink: 0;
+}
+
+.btnAddStrip {
+  padding: 0.4rem 0.75rem;
+  background-color: #38a169;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.btnRemoveStrip {
+  padding: 0.4rem 0.6rem;
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.cutCard {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  text-align: left;
+}
+
+.cutCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background-color: #f7fafc;
+  border-bottom: 1px solid #ddd;
+  font-size: 1.3rem;
+}
+
+.cutCardBody {
+  display: flex;
+}
+
+.cutCardSide {
+  flex: 1;
+  padding: 0.75rem 1rem;
+}
+
+.cutCardSide + .cutCardSide {
+  border-left: 1px solid #ddd;
+}
+
+.cutCardSideTitle {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+  color: #2d3748;
+}
+
+.stackList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stackLine {
+  font-size: 1.3rem;
+  line-height: 1.4;
+}

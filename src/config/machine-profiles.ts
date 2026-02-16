@@ -5,6 +5,7 @@ export interface MachineProfile {
   knives: number[];
   clearanceOnly?: number[];
   strictExclude?: number[];
+  arborLength: number; // inches
 }
 
 // === SLITTER 3 (Current Workstation) ===
@@ -19,7 +20,8 @@ export const SLITTER_3: MachineProfile = {
     0.062, 0.05, 0.031
   ],
   knives: [0.243, 0.365, 0.480],
-  strictExclude: [0.031, 0.062]
+  strictExclude: [0.031, 0.062],
+  arborLength: 64,
 };
 
 // === SLITTER 4 (New Workstation) ===
@@ -38,7 +40,8 @@ export const SLITTER_4: MachineProfile = {
     0.0500
   ],
   knives: [0.375],
-  clearanceOnly: [0.0505]
+  clearanceOnly: [0.0505],
+  arborLength: 67,
 };
 
 // === REGISTRY ===

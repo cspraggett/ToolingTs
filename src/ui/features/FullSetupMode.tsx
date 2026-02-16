@@ -41,7 +41,31 @@ export function FullSetupMode() {
       </div>
 
       <div className={styles.inputSection}>
-        {/* Coil Width + Gauge */}
+        {/* Order + Company */}
+        <div className={styles.flexRow}>
+          <div className={styles.flex1}>
+            <label className={styles.label}>Order #</label>
+            <input
+              type="text"
+              placeholder="e.g. 12345"
+              value={setup.orderNumber}
+              onChange={setup.onOrderNumberChange}
+              className={styles.inputNoMargin}
+            />
+          </div>
+          <div className={styles.flex1}>
+            <label className={styles.label}>Company</label>
+            <input
+              type="text"
+              placeholder="e.g. Acme Steel"
+              value={setup.companyName}
+              onChange={setup.onCompanyNameChange}
+              className={styles.inputNoMargin}
+            />
+          </div>
+        </div>
+
+        {/* Coil Width + Weight + Gauge */}
         <div className={styles.flexRow}>
           <div className={styles.flex1}>
             <label className={styles.label}>Coil Width</label>
@@ -55,10 +79,21 @@ export function FullSetupMode() {
             />
           </div>
           <div className={styles.flex1}>
-            <label className={styles.label}>Gauge (display only)</label>
+            <label className={styles.label}>Coil Weight</label>
             <input
               type="text"
-              placeholder="e.g. 20ga"
+              placeholder="e.g. 10000 lbs"
+              value={setup.coilWeight}
+              onChange={setup.onCoilWeightChange}
+              className={styles.inputNoMargin}
+            />
+          </div>
+          <div className={styles.flex1}>
+            <label className={styles.label}>Gauge (inches)</label>
+            <input
+              type="number"
+              step="0.001"
+              placeholder='e.g. 0.036"'
               value={setup.gauge}
               onChange={setup.onGaugeChange}
               className={styles.inputNoMargin}
@@ -220,16 +255,34 @@ export function FullSetupMode() {
       {/* RESULTS */}
       {setup.result && (
         <div className={styles.resultsArea}>
+          <button onClick={() => window.print()} className={styles.btnPrint}>
+            Print Setup
+          </button>
+          <div className={styles.printArea}>
           {/* Summary Banner */}
           <div className={styles.recommendationBox}>
             <p className={styles.recTitle}>Setup Summary</p>
+            {(setup.result.orderNumber || setup.result.companyName) && (
+              <p className={styles.recCount}>
+                {setup.result.orderNumber && (
+                  <>Order: <strong>{setup.result.orderNumber}</strong></>
+                )}
+                {setup.result.orderNumber && setup.result.companyName && " | "}
+                {setup.result.companyName && (
+                  <>Company: <strong>{setup.result.companyName}</strong></>
+                )}
+              </p>
+            )}
             <p className={styles.recValue}>
               {setup.result.grandTotalTools} tools | {setup.result.totalKnives} knives
             </p>
             <p className={styles.recCount}>
-              Coil: <strong>{setup.result.coilWidth.toFixed(3)}"</strong>
+              Coil Width: <strong>{setup.result.coilWidth.toFixed(3)}"</strong>
+              {setup.result.coilWeight && (
+                <> | Weight: <strong>{setup.result.coilWeight} lbs</strong></>
+              )}
               {setup.result.gauge && (
-                <> | Gauge: <strong>{setup.result.gauge}</strong></>
+                <> | Gauge: <strong>{parseFloat(setup.result.gauge).toFixed(3)}"</strong></>
               )}
             </p>
             <p className={styles.recCount}>
@@ -312,6 +365,7 @@ export function FullSetupMode() {
               </div>
             </div>
           </div>
+          </div>{/* end printArea */}
         </div>
       )}
     </div>

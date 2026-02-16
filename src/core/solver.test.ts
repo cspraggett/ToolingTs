@@ -40,6 +40,90 @@ describe('Core Solver (Pure)', () => {
   });
 });
 
+describe('Greedy/DP boundary edge cases', () => {
+  const machine = DEFAULT_MACHINE;
+
+  it('solves a target just above the greedy buffer', () => {
+    // 2.400" — just above 2" buffer, greedy should not overshoot
+    const result = findToolingSetup(2.4, machine);
+    expect(result).not.toBeNull();
+    const total = result!.stack.reduce((sum, t) => sum + t.size, 0);
+    expect(total).toBeCloseTo(2.4);
+  });
+
+  it('solves a target that needs only small tools (0.400")', () => {
+    // 0.400" — no 3"/2"/1" tools needed, pure small tool territory
+    const result = findToolingSetup(0.4, machine);
+    expect(result).not.toBeNull();
+    expect(result!.stack.length).toBe(1); // 0.4 is an exact tool
+    expect(result!.stack[0].size).toBe(0.4);
+  });
+
+  it('solves a large target where greedy packs many 3" tools (20.5")', () => {
+    const result = findToolingSetup(20.5, machine);
+    expect(result).not.toBeNull();
+    const total = result!.stack.reduce((sum, t) => sum + t.size, 0);
+    expect(total).toBeCloseTo(20.5);
+    // Optimal: 6x3" + 2" + 0.5" = 8 tools
+    expect(result!.stack.length).toBeLessThanOrEqual(8);
+  });
+
+  it('solves target just under largest tool (2.875")', () => {
+    // 2.875" — can't use a 3", must use 2" + 0.875"
+    const result = findToolingSetup(2.875, machine);
+    expect(result).not.toBeNull();
+    expect(result!.stack.length).toBe(2);
+    const total = result!.stack.reduce((sum, t) => sum + t.size, 0);
+    expect(total).toBeCloseTo(2.875);
+  });
+
+  it('solves target that crosses greedy boundary with non-round remainder (7.375")', () => {
+    // 7.375" — greedy takes 3" + 3", remainder 1.375" solved by DP
+    // optimal: 3+3+1+0.375 = 4 tools
+    const result = findToolingSetup(7.375, machine);
+    expect(result).not.toBeNull();
+    const total = result!.stack.reduce((sum, t) => sum + t.size, 0);
+    expect(total).toBeCloseTo(7.375);
+    expect(result!.stack.length).toBeLessThanOrEqual(4);
+  });
+
+  it('prefers fewer tools over greedy (5.0" = 3+2 not 3+1+1)', () => {
+    const result = findToolingSetup(5.0, machine);
+    expect(result).not.toBeNull();
+    // Optimal: 3" + 2" = 2 tools
+    expect(result!.stack.length).toBe(2);
+  });
+
+  it('handles target exactly equal to greedy buffer (2.0")', () => {
+    const result = findToolingSetup(2.0, machine);
+    expect(result).not.toBeNull();
+    expect(result!.stack.length).toBe(1);
+    expect(result!.stack[0].size).toBe(2.0);
+  });
+
+  it('solves target needing many small precision tools (0.506")', () => {
+    // 0.506" — needs combo like 0.5 + small shim, or 0.256 + 0.25, etc.
+    const result = findToolingSetup(0.506, machine);
+    expect(result).not.toBeNull();
+    const total = result!.stack.reduce((sum, t) => sum + t.size, 0);
+    expect(total).toBeCloseTo(0.506);
+  });
+
+  it('solves 6.0" exactly (was the old buffer boundary)', () => {
+    const result = findToolingSetup(6.0, machine);
+    expect(result).not.toBeNull();
+    // 3+3 = 2 tools
+    expect(result!.stack.length).toBe(2);
+  });
+
+  it('solves 4.0" — where greedy at buffer=2 takes one 3", leaving 1" for DP', () => {
+    const result = findToolingSetup(4.0, machine);
+    expect(result).not.toBeNull();
+    // 3+1 = 2 tools, or could be 2+2 = 2 tools — either way, 2 tools
+    expect(result!.stack.length).toBe(2);
+  });
+});
+
 describe('Clearance-Only Tools (Slitter 4)', () => {
   it('excludes 0.0505 from solver stacks', () => {
     // 0.101 = 2x 0.0505, but solver should use 0.1 + something else

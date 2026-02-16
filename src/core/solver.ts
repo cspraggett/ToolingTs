@@ -82,17 +82,15 @@ export function findToolingSetup(
   const targetUnits = inchesToUnits(targetInches);
   const activeTools = getActiveTools(machine, !!options.strictMode);
 
-  const SAFE_BUFFER = 6000;
+  const SAFE_BUFFER = 2000;
   let remainingUnits = targetUnits;
   const bigStack: Tool[] = [];
 
   const largestTool = activeTools[0];
 
-  if (remainingUnits > SAFE_BUFFER) {
-    while (remainingUnits > SAFE_BUFFER) {
-      remainingUnits -= largestTool.units;
-      bigStack.push(largestTool);
-    }
+  while (remainingUnits > SAFE_BUFFER && remainingUnits - largestTool.units >= 0) {
+    remainingUnits -= largestTool.units;
+    bigStack.push(largestTool);
   }
 
   const solvedStack = solveDP(remainingUnits, activeTools);

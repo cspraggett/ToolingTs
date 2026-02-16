@@ -1,7 +1,8 @@
 import { useState, ChangeEvent } from "react";
 import { findBestDualSetup, DualOptimizationResult } from "../../core/optimizer";
+import { findToolingSetup, SolverResult } from "../../core/solver";
 import { MACHINES, DEFAULT_MACHINE } from "../../config/machine-profiles";
-import { computeCoilUsage, computeEdgeSpacers } from "../../core/utils";
+import { computeCoilUsage, computeKnifeClearance, computeShoulders } from "../../core/utils";
 
 export interface StripEntry {
   id: string;
@@ -27,7 +28,11 @@ export interface FullSetupResult {
   coilWidth: number;
   gauge: string;
   edgeTrim: number;
-  edgeSpacer: number;
+  bottomOpening: SolverResult;
+  topOpening: SolverResult;
+  bottomClosing: SolverResult;
+  topClosing: SolverResult;
+  shouldersValid: boolean;
 }
 
 function makeStrip(): StripEntry {
@@ -144,13 +149,6 @@ export function useFullSetup() {
       return;
     }
 
-    const { edgeTrim, edgeSpacer } = computeEdgeSpacers(
-      stripTotal,
-      arborUsed,
-      cw,
-      currentMachine.arborLength
-    );
-
     // Solve for each unique strip
     const stripResults: StripResult[] = [];
     let grandTotalTools = 0;
@@ -190,6 +188,35 @@ export function useFullSetup() {
       grandTotalTools += dualResult.totalToolCount * quantity;
     }
 
+    // Compute clearance offsets
+    const { bottomClearance, topClearance } = computeKnifeClearance(
+      knife, clr, currentMachine.knifeClearanceOffsets
+    );
+
+    const shoulders = computeShoulders(
+      stripTotal, currentMachine.arborLength, knife, bottomClearance, topClearance
+    );
+
+    // Solve tooling for all 4 shoulders (opening excludes .031/.062)
+    const targets = [
+      { key: "bottomOpening" as const, value: shoulders.bottomOpening, strict: true },
+      { key: "topOpening" as const, value: shoulders.topOpening, strict: true },
+      { key: "bottomClosing" as const, value: shoulders.bottomClosing, strict: false },
+      { key: "topClosing" as const, value: shoulders.topClosing, strict: false },
+    ];
+
+    const solved: Record<string, SolverResult> = {};
+    for (const { key, value, strict } of targets) {
+      const result = findToolingSetup(value, currentMachine, { strictMode: strict });
+      if (!result) {
+        setError(`No tooling solution for ${key} shoulder (${value.toFixed(3)}").`);
+        return;
+      }
+      solved[key] = result;
+    }
+
+    const edgeTrim = cw - stripTotal;
+
     setResult({
       stripResults,
       grandTotalTools,
@@ -198,7 +225,11 @@ export function useFullSetup() {
       coilWidth: cw,
       gauge,
       edgeTrim,
-      edgeSpacer,
+      bottomOpening: solved.bottomOpening,
+      topOpening: solved.topOpening,
+      bottomClosing: solved.bottomClosing,
+      topClosing: solved.topClosing,
+      shouldersValid: shoulders.isValid,
     });
   };
 

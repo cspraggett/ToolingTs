@@ -7,8 +7,6 @@ interface ResultDisplayProps {
 }
 
 export function ResultDisplay({ result }: ResultDisplayProps) {
-  if (!result || !result.stack) return null;
-
   const summary = summarizeStack(result.stack);
 
   return (

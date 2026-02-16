@@ -1,11 +1,11 @@
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import { findBestDualSetup, DualOptimizationResult } from "../../core/optimizer";
-import { MACHINES, DEFAULT_MACHINE, MachineProfile } from "../../config/machine-profiles";
+import { MACHINES, DEFAULT_MACHINE } from "../../config/machine-profiles";
 
 export function useStationCalculator() {
   // === Machine Selection ===
   const [selectedMachineId, setSelectedMachineId] = useState(DEFAULT_MACHINE.id);
-  const currentMachine: MachineProfile = MACHINES[selectedMachineId] || DEFAULT_MACHINE;
+  const currentMachine = MACHINES[selectedMachineId] ?? DEFAULT_MACHINE;
 
   // === Calculator Inputs ===
   const [cutSize, setCutSize] = useState("");
@@ -19,12 +19,6 @@ export function useStationCalculator() {
   const [result, setResult] = useState<DualOptimizationResult | null>(null);
   const [calculatedTargets, setCalculatedTargets] = useState<{ male: number; female: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Reset knife & strict mode when machine changes
-  useEffect(() => {
-    setKnifeSize(currentMachine.knives[0].toString());
-    setStrictMode(false);
-  }, [currentMachine]);
 
   const isStrictCapable = !!currentMachine.strictExclude?.length;
 
@@ -75,7 +69,13 @@ export function useStationCalculator() {
   };
 
   // Input change helpers
-  const onMachineChange = (e: ChangeEvent<HTMLSelectElement>) => setSelectedMachineId(e.target.value);
+  const onMachineChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const id = e.target.value;
+    setSelectedMachineId(id);
+    const machine = MACHINES[id] ?? DEFAULT_MACHINE;
+    setKnifeSize(machine.knives[0].toString());
+    setStrictMode(false);
+  };
   const onCutSizeChange = (e: ChangeEvent<HTMLInputElement>) => setCutSize(e.target.value);
   const onKnifeSizeChange = (e: ChangeEvent<HTMLSelectElement>) => setKnifeSize(e.target.value);
   const onClearanceChange = (e: ChangeEvent<HTMLInputElement>) => setClearance(e.target.value);

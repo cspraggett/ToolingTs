@@ -1,7 +1,7 @@
 import { useState, ChangeEvent } from "react";
 import { findBestDualSetup, DualOptimizationResult } from "../../core/optimizer";
 import { findToolingSetup, SolverResult } from "../../core/solver";
-import { MACHINES, DEFAULT_MACHINE } from "../../config/machine-profiles";
+import { MACHINES, DEFAULT_MACHINE, MachineProfile } from "../../config/machine-profiles";
 import { computeCoilUsage, computeKnifeClearance, computeShoulders } from "../../core/utils";
 
 export interface StripEntry {

@@ -36,42 +36,58 @@ const getActiveTools = (profile: MachineProfile, isStrict: boolean): Tool[] => {
     .sort((a, b) => b.units - a.units);
 };
 
-const solveDP = (targetUnits: number, inventory: Tool[]): Tool[] | null => {
-  const dp: (Tool[] | null)[] = new Array<Tool[] | null>(targetUnits + 1).fill(null);
-  dp[0] = [];
+/**
+ * Solves for the optimal stack of tools using Dynamic Programming.
+ * It minimizes the number of tools used and breaks ties by preferring larger tools.
+ */
+const solveOptimalStack = (targetUnits: number, inventory: Tool[]): Tool[] | null => {
+  // dp[units] stores the best (fewest tools) stack for that exact unit value.
+  const bestStackAtUnits: (Tool[] | null)[] = new Array<Tool[] | null>(targetUnits + 1).fill(null);
+  bestStackAtUnits[0] = [];
 
-  for (let i = 0; i <= targetUnits; i++) {
-    const currentStack = dp[i];
+  for (let currentUnits = 0; currentUnits <= targetUnits; currentUnits++) {
+    const currentStack = bestStackAtUnits[currentUnits];
     if (!currentStack) continue;
 
     for (const tool of inventory) {
-      const next = i + tool.units;
-      if (next > targetUnits) continue;
+      const nextTotalUnits = currentUnits + tool.units;
+      if (nextTotalUnits > targetUnits) continue;
 
-      const countUsed = currentStack.filter(t => t.size === tool.size).length;
-      if (countUsed >= 2) continue;
+      // Limitation: We only allow a maximum of 2 tools of the same size per setup
+      // to avoid using up specific inventory sizes.
+      const countOfThisToolUsed = currentStack.filter(t => t.size === tool.size).length;
+      if (countOfThisToolUsed >= 2) continue;
 
-      const candidate = [...currentStack, tool];
-      const existing = dp[next];
+      const candidateStack = [...currentStack, tool];
+      const existingBestStack = bestStackAtUnits[nextTotalUnits];
 
-      let isBetter = false;
-      if (!existing) {
-        isBetter = true;
-      } else if (candidate.length < existing.length) {
-        isBetter = true;
-      } else if (candidate.length === existing.length) {
-        const maxCand = Math.max(...candidate.map(t => t.size));
-        const maxExist = Math.max(...existing.map(t => t.size));
-        if (maxCand > maxExist) isBetter = true;
+      let isCandidateBetter = false;
+      if (!existingBestStack) {
+        isCandidateBetter = true;
+      } else if (candidateStack.length < existingBestStack.length) {
+        // Preference 1: Fewer tools total.
+        isCandidateBetter = true;
+      } else if (candidateStack.length === existingBestStack.length) {
+        // Preference 2: Tie-breaker - Use larger tools if possible.
+        const maxCandidateSize = Math.max(...candidateStack.map(t => t.size));
+        const maxExistingSize = Math.max(...existingBestStack.map(t => t.size));
+        if (maxCandidateSize > maxExistingSize) isCandidateBetter = true;
       }
 
-      if (isBetter) dp[next] = candidate;
+      if (isCandidateBetter) {
+        bestStackAtUnits[nextTotalUnits] = candidateStack;
+      }
     }
   }
 
-  return dp[targetUnits];
+  return bestStackAtUnits[targetUnits];
 };
 
+/**
+ * Finds the tooling setup for a target width.
+ * For performance, it uses a 'Greedy' approach for the bulk of the width 
+ * and DP for the remaining small fraction (the SAFE_BUFFER).
+ */
 export function findToolingSetup(
   targetInches: number,
   machine: MachineProfile,
@@ -82,23 +98,26 @@ export function findToolingSetup(
   const targetUnits = inchesToUnits(targetInches);
   const activeTools = getActiveTools(machine, !!options.strictMode);
 
-  const SAFE_BUFFER = 6000;
-  let remainingUnits = targetUnits;
-  const bigStack: Tool[] = [];
+  // We use Greedy logic for widths larger than this buffer.
+  const GREEDY_THRESHOLD_UNITS = 6000; 
+  let unitsToSolveWithGreedy = targetUnits;
+  const greedyStack: Tool[] = [];
 
-  const largestTool = activeTools[0];
+  const largestAvailableTool = activeTools[0];
 
-  while (remainingUnits > SAFE_BUFFER && remainingUnits - largestTool.units >= 0) {
-    remainingUnits -= largestTool.units;
-    bigStack.push(largestTool);
+  // Fill the bulk of the width with the largest available tool.
+  while (unitsToSolveWithGreedy > GREEDY_THRESHOLD_UNITS && unitsToSolveWithGreedy - largestAvailableTool.units >= 0) {
+    unitsToSolveWithGreedy -= largestAvailableTool.units;
+    greedyStack.push(largestAvailableTool);
   }
 
-  const solvedStack = solveDP(remainingUnits, activeTools);
+  // Solve the remaining precision gap using the optimal DP solver.
+  const optimalRemainderStack = solveOptimalStack(unitsToSolveWithGreedy, activeTools);
 
-  if (!solvedStack) return null;
+  if (!optimalRemainderStack) return null;
 
   return {
     target: targetInches,
-    stack: [...bigStack, ...solvedStack]
+    stack: [...greedyStack, ...optimalRemainderStack]
   };
 }

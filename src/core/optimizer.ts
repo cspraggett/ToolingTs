@@ -14,6 +14,11 @@ export interface DualOptimizationResult {
   totalToolCount: number;
 }
 
+/**
+ * Finds the optimal dual setup for both Male and Female sides.
+ * It shifts the nominal targets within the allowed tolerance window
+ * to find the setup that uses the fewest total tools.
+ */
 export function findBestDualSetup(
   maleTarget: number,
   femaleTarget: number,
@@ -22,48 +27,52 @@ export function findBestDualSetup(
   options: SolverOptions = {}
 ): DualOptimizationResult | null {
 
-  const minUnits = inchesToUnits(tolerance.minus);
-  const maxUnits = inchesToUnits(tolerance.plus);
+  const minOffsetUnits = inchesToUnits(tolerance.minus);
+  const maxOffsetUnits = inchesToUnits(tolerance.plus);
 
-  if (minUnits > 500 || maxUnits > 500) return null;
+  // Safety check to prevent excessive calculations.
+  if (minOffsetUnits > 500 || maxOffsetUnits > 500) return null;
 
-  let bestResult: DualOptimizationResult | null = null;
+  let bestDualResult: DualOptimizationResult | null = null;
 
-  for (let offsetUnits = -minUnits; offsetUnits <= maxUnits; offsetUnits++) {
-    const offset = unitsToInches(offsetUnits);
+  // We iterate through every possible 0.001" increment within the tolerance window.
+  for (let currentOffsetUnits = -minOffsetUnits; currentOffsetUnits <= maxOffsetUnits; currentOffsetUnits++) {
+    const currentOffsetInches = unitsToInches(currentOffsetUnits);
 
-    const candidateMale = maleTarget + offset;
-    const candidateFemale = femaleTarget + offset;
+    const candidateMaleTarget = maleTarget + currentOffsetInches;
+    const candidateFemaleTarget = femaleTarget + currentOffsetInches;
 
-    const solM = findToolingSetup(candidateMale, machine, options);
-    const solF = findToolingSetup(candidateFemale, machine, options);
+    // Find tooling stacks for both targets at this specific offset.
+    const maleSolution = findToolingSetup(candidateMaleTarget, machine, options);
+    const femaleSolution = findToolingSetup(candidateFemaleTarget, machine, options);
 
-    if (!solM || !solF) continue;
+    if (!maleSolution || !femaleSolution) continue;
 
-    const currentCount = solM.stack.length + solF.stack.length;
+    const totalToolCount = maleSolution.stack.length + femaleSolution.stack.length;
 
-    let isBetter = false;
-    if (!bestResult) {
-      isBetter = true;
-    } else if (currentCount < bestResult.totalToolCount) {
-      isBetter = true;
+    let isBetterResult = false;
+    if (!bestDualResult) {
+      isBetterResult = true;
+    } else if (totalToolCount < bestDualResult.totalToolCount) {
+      // Primary Optimization: Minimize total tool count for the pair.
+      isBetterResult = true;
     }
-    // Tie-Breaker: Prefer smaller offsets (closer to nominal)
-    else if (currentCount === bestResult.totalToolCount) {
-      if (Math.abs(offset) < Math.abs(bestResult.offset)) {
-        isBetter = true;
+    else if (totalToolCount === bestDualResult.totalToolCount) {
+      // Tie-Breaker: Prefer the setup that is closest to the nominal target (smallest offset).
+      if (Math.abs(currentOffsetInches) < Math.abs(bestDualResult.offset)) {
+        isBetterResult = true;
       }
     }
 
-    if (isBetter) {
-      bestResult = {
-        offset,
-        maleResult: solM,
-        femaleResult: solF,
-        totalToolCount: currentCount
+    if (isBetterResult) {
+      bestDualResult = {
+        offset: currentOffsetInches,
+        maleResult: maleSolution,
+        femaleResult: femaleSolution,
+        totalToolCount
       };
     }
   }
 
-  return bestResult;
+  return bestDualResult;
 }

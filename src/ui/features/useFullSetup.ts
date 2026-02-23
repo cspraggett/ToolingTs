@@ -38,274 +38,230 @@ export interface FullSetupResult {
   shouldersValid: boolean;
 }
 
+export interface FullSetupInputs {
+  orderNumber: string;
+  companyName: string;
+  coilWidth: string;
+  coilWeight: string;
+  gauge: string;
+  knifeSize: string;
+  clearance: string;
+  strictMode: boolean;
+}
+
 function makeStrip(): StripEntry {
   return { id: crypto.randomUUID(), width: "", quantity: "1", minusTol: "0.000", plusTol: "0.000" };
 }
 
+/**
+ * Validates and transforms raw input strings into numerical data,
+ * then performs the full tooling setup calculation.
+ */
+function calculateFullSetup(
+  inputs: FullSetupInputs,
+  strips: StripEntry[],
+  machine: MachineProfile
+): { result: FullSetupResult | null; error: string | null } {
+  const coilWidth = parseFloat(inputs.coilWidth);
+  const knifeSize = parseFloat(inputs.knifeSize);
+  const clearance = parseFloat(inputs.clearance);
+  const isStrictCapable = !!machine.strictExclude?.length;
+
+  // Validate Basic Coil Inputs
+  if (isNaN(coilWidth) || coilWidth <= 0) return { result: null, error: "Please enter a valid coil width." };
+  if (coilWidth > machine.arborLength) return { result: null, error: `Coil width (${coilWidth}") exceeds arbor length (${machine.arborLength}").` };
+
+  // 1. Parse & validate individual strip inputs
+  const parsedStrips = [];
+  for (const stripEntry of strips) {
+    const width = parseFloat(stripEntry.width);
+    const quantity = parseInt(stripEntry.quantity, 10);
+    const minusTolerance = parseFloat(stripEntry.minusTol) || 0;
+    const plusTolerance = parseFloat(stripEntry.plusTol) || 0;
+    
+    if (isNaN(width) || width <= 0) return { result: null, error: "Each strip width must be greater than 0." };
+    if (isNaN(quantity) || quantity < 1) return { result: null, error: "Each strip quantity must be at least 1." };
+    if (plusTolerance > 0.500 || minusTolerance > 0.500) {
+      return { result: null, error: `Strip ${width.toFixed(3)}": tolerance is too large (Max 0.500).` };
+    }
+    
+    parsedStrips.push({ width, quantity, minus: minusTolerance, plus: plusTolerance });
+  }
+
+  // 2. Deduplicate identical strip widths
+  // Physically, we set up one station per unique width. We group them to find a single tooling solution.
+  const uniqueWidthMap = new Map<string, { width: number; quantity: number; minus: number; plus: number }>();
+  for (const strip of parsedStrips) {
+    const widthKey = strip.width.toFixed(3);
+    const existingEntry = uniqueWidthMap.get(widthKey);
+    if (existingEntry) {
+      existingEntry.quantity += strip.quantity;
+      // We take the largest allowed tolerance window if they vary.
+      existingEntry.minus = Math.max(existingEntry.minus, strip.minus);
+      existingEntry.plus = Math.max(existingEntry.plus, strip.plus);
+    } else {
+      uniqueWidthMap.set(widthKey, { ...strip });
+    }
+  }
+
+  const uniqueStrips = Array.from(uniqueWidthMap.values());
+
+  // 3. Compute physical coil usage and check against arbor limits
+  const { totalKnives, stripTotal, arborUsed } = computeCoilUsage(uniqueStrips, knifeSize);
+
+  if (stripTotal > coilWidth) {
+    return { result: null, error: `Total cut width (${stripTotal.toFixed(3)}") exceeds coil width (${coilWidth.toFixed(3)}").` };
+  }
+  if (arborUsed > machine.arborLength) {
+    return { result: null, error: `Setup (${stripTotal.toFixed(3)}" cuts + ${totalKnives} knives) exceeds arbor length (${machine.arborLength}").` };
+  }
+
+  // 4. Solve for each unique strip setup (Male and Female tooling)
+  const stripResults: StripResult[] = [];
+  let grandTotalTools = 0;
+
+  for (const strip of uniqueStrips) {
+    const nominalFemale = strip.width;
+    // Calculation: Male = Width - (2 * Knife) - (2 * Clearance)
+    const nominalMale = strip.width - knifeSize * 2 - clearance * 2;
+
+    if (nominalMale <= 0) {
+      return { result: null, error: `Strip ${strip.width.toFixed(3)}": knives + clearance exceed the strip width.` };
+    }
+
+    // Optimization: find the best tooling stack for both male and female within tolerances.
+    const dualResult = findBestDualSetup(
+      nominalMale,
+      nominalFemale,
+      { minus: strip.minus, plus: strip.plus },
+      machine,
+      { strictMode: isStrictCapable && inputs.strictMode }
+    );
+
+    if (!dualResult) return { result: null, error: `No solution found for strip width ${strip.width.toFixed(3)}".` };
+
+    stripResults.push({ stripWidth: strip.width, quantity: strip.quantity, nominalMale, nominalFemale, dualResult });
+    grandTotalTools += dualResult.totalToolCount * strip.quantity;
+  }
+
+  // 5. Compute clearance and arbor centering shoulders
+  const { bottomClearance, topClearance } = computeKnifeClearance(knifeSize, clearance, machine.knifeClearanceOffsets);
+  const shoulders = computeShoulders(stripTotal, machine.arborLength, knifeSize, bottomClearance, topClearance);
+
+  // 6. Solve tooling stacks for all 4 shoulders (Opening/Closing, Top/Bottom)
+  const shoulderTargets = [
+    { key: "bottomOpening" as const, value: shoulders.bottomOpening, strict: true },
+    { key: "topOpening" as const, value: shoulders.topOpening, strict: true },
+    { key: "bottomClosing" as const, value: shoulders.bottomClosing, strict: false },
+    { key: "topClosing" as const, value: shoulders.topClosing, strict: false },
+  ];
+
+  const solvedShoulders: Record<string, SolverResult> = {};
+  for (const target of shoulderTargets) {
+    const solution = findToolingSetup(target.value, machine, { strictMode: target.strict });
+    if (!solution) return { result: null, error: `No tooling solution for ${target.key} shoulder (${target.value.toFixed(3)}").` };
+    solvedShoulders[target.key] = solution;
+  }
+
+  return {
+    error: null,
+    result: {
+      stripResults,
+      grandTotalTools,
+      totalKnives,
+      stripTotal,
+      orderNumber: inputs.orderNumber,
+      companyName: inputs.companyName,
+      coilWidth,
+      coilWeight: inputs.coilWeight,
+      gauge: inputs.gauge,
+      edgeTrim: coilWidth - stripTotal,
+      bottomOpening: solvedShoulders.bottomOpening,
+      topOpening: solvedShoulders.topOpening,
+      bottomClosing: solvedShoulders.bottomClosing,
+      topClosing: solvedShoulders.topClosing,
+      shouldersValid: shoulders.isValid,
+    }
+  };
+}
+
 export function useFullSetup() {
-  // === Machine Selection ===
   const [selectedMachineId, setSelectedMachineId] = useState(DEFAULT_MACHINE.id);
   const currentMachine = MACHINES[selectedMachineId] ?? DEFAULT_MACHINE;
 
-  // === Inputs ===
-  const [orderNumber, setOrderNumber] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [coilWidth, setCoilWidth] = useState("");
-  const [coilWeight, setCoilWeight] = useState("");
-  const [gauge, setGauge] = useState("");
-  const [knifeSize, setKnifeSize] = useState(currentMachine.knives[0].toString());
-  const [clearance, setClearance] = useState("0.008");
-  const [strictMode, setStrictMode] = useState(false);
+  const [inputs, setInputs] = useState<FullSetupInputs>({
+    orderNumber: "",
+    companyName: "",
+    coilWidth: "",
+    coilWeight: "",
+    gauge: "",
+    knifeSize: currentMachine.knives[0].toString(),
+    clearance: "0.008",
+    strictMode: false,
+  });
 
-  // === Strip List ===
   const [strips, setStrips] = useState<StripEntry[]>([makeStrip()]);
-
-  // === Results ===
   const [result, setResult] = useState<FullSetupResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const isStrictCapable = !!currentMachine.strictExclude?.length;
 
-  // === Strip List Handlers ===
+  // Handlers
   const addStrip = () => setStrips((prev) => [...prev, makeStrip()]);
+  const removeStrip = (id: string) => setStrips((prev) => (prev.length <= 1 ? prev : prev.filter((s) => s.id !== id)));
+  const updateStrip = (id: string, field: keyof Omit<StripEntry, 'id'>, value: string) =>
+    setStrips((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
 
-  const removeStrip = (id: string) =>
-    setStrips((prev) => (prev.length <= 1 ? prev : prev.filter((s) => s.id !== id)));
+  const handleInputChange = (field: keyof FullSetupInputs, value: string | boolean) => {
+    setInputs((prev) => ({ ...prev, [field]: value }));
+  };
 
-  const updateStrip = (id: string, field: "width" | "quantity" | "minusTol" | "plusTol", value: string) =>
-    setStrips((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
-    );
-
-  // === Calculate ===
   const handleCalculate = () => {
-    setError(null);
-    setResult(null);
-
-    const cw = parseFloat(coilWidth);
-    const knife = parseFloat(knifeSize);
-    const clr = parseFloat(clearance);
-
-    if (isNaN(cw) || cw <= 0) {
-      setError("Please enter a valid coil width.");
-      return;
-    }
-    if (cw > currentMachine.arborLength) {
-      setError(`Coil width (${cw}") exceeds arbor length (${currentMachine.arborLength}").`);
-      return;
-    }
-
-    // Parse & validate strips
-    const parsed: { width: number; quantity: number; minus: number; plus: number }[] = [];
-    for (const s of strips) {
-      const w = parseFloat(s.width);
-      const q = parseInt(s.quantity, 10);
-      const m = parseFloat(s.minusTol) || 0;
-      const p = parseFloat(s.plusTol) || 0;
-      if (isNaN(w) || w <= 0) {
-        setError("Each strip width must be greater than 0.");
-        return;
-      }
-      if (isNaN(q) || q < 1) {
-        setError("Each strip quantity must be at least 1.");
-        return;
-      }
-      if (p > 0.500 || m > 0.500) {
-        setError(`Strip ${w.toFixed(3)}": tolerance is too large (Max 0.500).`);
-        return;
-      }
-      parsed.push({ width: w, quantity: q, minus: m, plus: p });
-    }
-
-    // Deduplicate by width (sum quantities, keep largest tolerance window)
-    const deduped = new Map<string, { width: number; quantity: number; minus: number; plus: number }>();
-    for (const { width, quantity, minus, plus } of parsed) {
-      const key = width.toFixed(3);
-      const existing = deduped.get(key);
-      if (existing) {
-        existing.quantity += quantity;
-        existing.minus = Math.max(existing.minus, minus);
-        existing.plus = Math.max(existing.plus, plus);
-      } else {
-        deduped.set(key, { width, quantity, minus, plus });
-      }
-    }
-
-    const uniqueStrips = Array.from(deduped.values()).map((val) => ({
-      width: val.width,
-      quantity: val.quantity,
-      minus: val.minus,
-      plus: val.plus,
-    }));
-
-    // Compute coil usage
-    const { totalKnives, stripTotal, arborUsed } = computeCoilUsage(uniqueStrips, knife);
-
-    if (stripTotal > cw) {
-      setError(
-        `Total cut width (${stripTotal.toFixed(3)}") exceeds coil width (${cw.toFixed(3)}").`
-      );
-      return;
-    }
-
-    if (arborUsed > currentMachine.arborLength) {
-      setError(
-        `Setup (${stripTotal.toFixed(3)}" cuts + ${totalKnives} knives) exceeds arbor length (${currentMachine.arborLength}").`
-      );
-      return;
-    }
-
-    // Solve for each unique strip
-    const stripResults: StripResult[] = [];
-    let grandTotalTools = 0;
-
-    for (const { width, quantity, minus, plus } of uniqueStrips) {
-      const nominalFemale = width;
-      const nominalMale = width - knife * 2 - clr * 2;
-
-      if (nominalMale <= 0) {
-        setError(
-          `Strip ${width.toFixed(3)}": knives + clearance exceed the strip width.`
-        );
-        return;
-      }
-
-      const dualResult = findBestDualSetup(
-        nominalMale,
-        nominalFemale,
-        { minus, plus },
-        currentMachine,
-        { strictMode: isStrictCapable && strictMode }
-      );
-
-      if (!dualResult) {
-        setError(`No solution found for strip width ${width.toFixed(3)}".`);
-        return;
-      }
-
-      stripResults.push({
-        stripWidth: width,
-        quantity,
-        nominalMale,
-        nominalFemale,
-        dualResult,
-      });
-
-      grandTotalTools += dualResult.totalToolCount * quantity;
-    }
-
-    // Compute clearance offsets
-    const { bottomClearance, topClearance } = computeKnifeClearance(
-      knife, clr, currentMachine.knifeClearanceOffsets
-    );
-
-    const shoulders = computeShoulders(
-      stripTotal, currentMachine.arborLength, knife, bottomClearance, topClearance
-    );
-
-    // Solve tooling for all 4 shoulders (opening excludes .031/.062)
-    const targets = [
-      { key: "bottomOpening" as const, value: shoulders.bottomOpening, strict: true },
-      { key: "topOpening" as const, value: shoulders.topOpening, strict: true },
-      { key: "bottomClosing" as const, value: shoulders.bottomClosing, strict: false },
-      { key: "topClosing" as const, value: shoulders.topClosing, strict: false },
-    ];
-
-    const solved: Record<string, SolverResult> = {};
-    for (const { key, value, strict } of targets) {
-      const result = findToolingSetup(value, currentMachine, { strictMode: strict });
-      if (!result) {
-        setError(`No tooling solution for ${key} shoulder (${value.toFixed(3)}").`);
-        return;
-      }
-      solved[key] = result;
-    }
-
-    const edgeTrim = cw - stripTotal;
-
-    setResult({
-      stripResults,
-      grandTotalTools,
-      totalKnives,
-      stripTotal,
-      orderNumber,
-      companyName,
-      coilWidth: cw,
-      coilWeight,
-      gauge,
-      edgeTrim,
-      bottomOpening: solved.bottomOpening,
-      topOpening: solved.topOpening,
-      bottomClosing: solved.bottomClosing,
-      topClosing: solved.topClosing,
-      shouldersValid: shoulders.isValid,
-    });
+    const { result, error } = calculateFullSetup(inputs, strips, currentMachine);
+    setResult(result);
+    setError(error);
   };
 
   const handleReset = () => {
-    setOrderNumber("");
-    setCompanyName("");
-    setCoilWidth("");
-    setCoilWeight("");
-    setGauge("");
+    setInputs({
+      orderNumber: "",
+      companyName: "",
+      coilWidth: "",
+      coilWeight: "",
+      gauge: "",
+      knifeSize: currentMachine.knives[0].toString(),
+      clearance: "0.008",
+      strictMode: false,
+    });
     setStrips([makeStrip()]);
     setResult(null);
     setError(null);
   };
 
-  // Input change helpers
   const onMachineChange = (e: ChangeEvent<HTMLSelectElement>) => {
     const id = e.target.value;
     setSelectedMachineId(id);
     const machine = MACHINES[id] ?? DEFAULT_MACHINE;
-    setKnifeSize(machine.knives[0].toString());
-    setStrictMode(false);
+    setInputs(prev => ({
+      ...prev,
+      knifeSize: machine.knives[0].toString(),
+      strictMode: false
+    }));
   };
-  const onOrderNumberChange = (e: ChangeEvent<HTMLInputElement>) => setOrderNumber(e.target.value);
-  const onCompanyNameChange = (e: ChangeEvent<HTMLInputElement>) => setCompanyName(e.target.value);
-  const onCoilWidthChange = (e: ChangeEvent<HTMLInputElement>) => setCoilWidth(e.target.value);
-  const onCoilWeightChange = (e: ChangeEvent<HTMLInputElement>) => setCoilWeight(e.target.value);
-  const onGaugeChange = (e: ChangeEvent<HTMLInputElement>) => setGauge(e.target.value);
-  const onKnifeSizeChange = (e: ChangeEvent<HTMLSelectElement>) => setKnifeSize(e.target.value);
-  const onClearanceChange = (e: ChangeEvent<HTMLInputElement>) => setClearance(e.target.value);
-  const onStrictModeChange = (e: ChangeEvent<HTMLInputElement>) => setStrictMode(e.target.checked);
 
   return {
-    // Machine
     selectedMachineId,
     currentMachine,
     onMachineChange,
-
-    // Inputs
-    orderNumber,
-    onOrderNumberChange,
-    companyName,
-    onCompanyNameChange,
-    coilWidth,
-    onCoilWidthChange,
-    coilWeight,
-    onCoilWeightChange,
-    gauge,
-    onGaugeChange,
-    knifeSize,
-    onKnifeSizeChange,
-    clearance,
-    onClearanceChange,
-    strictMode,
-    onStrictModeChange,
+    inputs,
+    handleInputChange,
     isStrictCapable,
-
-    // Strips
     strips,
     addStrip,
     removeStrip,
     updateStrip,
-
-    // Actions
     handleCalculate,
     handleReset,
-
-    // Results
     result,
     error,
   };

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MACHINES } from "../../config/machine-profiles";
-import { Tool } from "../../core/solver";
+import { Tool, SolverResult } from "../../core/solver";
 import { summarizeStack } from "../../core/utils";
 import styles from "../styles.module.css";
 import { useFullSetup } from "./useFullSetup";
@@ -18,8 +18,41 @@ function StackList({ stack }: { stack: Tool[] }) {
   );
 }
 
+interface SetupCardProps {
+  title: string;
+  side1: { label: string; result: SolverResult };
+  side2: { label: string; result: SolverResult };
+  extraHeader?: React.ReactNode;
+}
+
+function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) {
+  return (
+    <div className={styles.cutCard}>
+      <div className={styles.cutCardHeader}>
+        <span><strong>{title}</strong></span>
+        {extraHeader}
+      </div>
+      <div className={styles.cutCardBody}>
+        <div className={styles.cutCardSide}>
+          <div className={styles.cutCardSideTitle}>
+            {side1.label} — {side1.result.target.toFixed(3)}"
+          </div>
+          <StackList stack={side1.result.stack} />
+        </div>
+        <div className={styles.cutCardSide}>
+          <div className={styles.cutCardSideTitle}>
+            {side2.label} — {side2.result.target.toFixed(3)}"
+          </div>
+          <StackList stack={side2.result.stack} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function FullSetupMode() {
   const setup = useFullSetup();
+  const { inputs, handleInputChange } = setup;
   const [showOptimizer, setShowOptimizer] = useState(false);
 
   return (
@@ -48,8 +81,8 @@ export function FullSetupMode() {
             <input
               type="text"
               placeholder="e.g. 12345"
-              value={setup.orderNumber}
-              onChange={setup.onOrderNumberChange}
+              value={inputs.orderNumber}
+              onChange={(e) => handleInputChange("orderNumber", e.target.value)}
               className={styles.inputNoMargin}
             />
           </div>
@@ -58,8 +91,8 @@ export function FullSetupMode() {
             <input
               type="text"
               placeholder="e.g. Acme Steel"
-              value={setup.companyName}
-              onChange={setup.onCompanyNameChange}
+              value={inputs.companyName}
+              onChange={(e) => handleInputChange("companyName", e.target.value)}
               className={styles.inputNoMargin}
             />
           </div>
@@ -73,8 +106,8 @@ export function FullSetupMode() {
               type="number"
               step="0.001"
               placeholder='e.g. 48.000"'
-              value={setup.coilWidth}
-              onChange={setup.onCoilWidthChange}
+              value={inputs.coilWidth}
+              onChange={(e) => handleInputChange("coilWidth", e.target.value)}
               className={styles.inputNoMargin}
             />
           </div>
@@ -83,8 +116,8 @@ export function FullSetupMode() {
             <input
               type="text"
               placeholder="e.g. 10000 lbs"
-              value={setup.coilWeight}
-              onChange={setup.onCoilWeightChange}
+              value={inputs.coilWeight}
+              onChange={(e) => handleInputChange("coilWeight", e.target.value)}
               className={styles.inputNoMargin}
             />
           </div>
@@ -94,8 +127,8 @@ export function FullSetupMode() {
               type="number"
               step="0.001"
               placeholder='e.g. 0.036"'
-              value={setup.gauge}
-              onChange={setup.onGaugeChange}
+              value={inputs.gauge}
+              onChange={(e) => handleInputChange("gauge", e.target.value)}
               className={styles.inputNoMargin}
             />
           </div>
@@ -106,8 +139,8 @@ export function FullSetupMode() {
           <div className={styles.flex1}>
             <label className={styles.label}>Knife Size</label>
             <select
-              value={setup.knifeSize}
-              onChange={setup.onKnifeSizeChange}
+              value={inputs.knifeSize}
+              onChange={(e) => handleInputChange("knifeSize", e.target.value)}
               className={styles.selectInput}
             >
               {setup.currentMachine.knives.map((k) => (
@@ -122,8 +155,8 @@ export function FullSetupMode() {
             <input
               type="number"
               step="0.001"
-              value={setup.clearance}
-              onChange={setup.onClearanceChange}
+              value={inputs.clearance}
+              onChange={(e) => handleInputChange("clearance", e.target.value)}
               className={styles.inputNoMargin}
             />
           </div>
@@ -135,8 +168,8 @@ export function FullSetupMode() {
             <input
               type="checkbox"
               id="strictModeFullSetup"
-              checked={setup.strictMode}
-              onChange={setup.onStrictModeChange}
+              checked={inputs.strictMode}
+              onChange={(e) => handleInputChange("strictMode", e.target.checked)}
               className={styles.checkbox}
             />
             <label htmlFor="strictModeFullSetup" className={styles.checkboxLabel}>
@@ -296,75 +329,42 @@ export function FullSetupMode() {
           </div>
 
           {/* Opening Shoulders */}
-          <div className={styles.cutCard}>
-            <div className={styles.cutCardHeader}>
-              <span><strong>Opening Shoulders</strong></span>
-            </div>
-            <div className={styles.cutCardBody}>
-              <div className={styles.cutCardSide}>
-                <div className={styles.cutCardSideTitle}>
-                  Bottom — {setup.result.bottomOpening.target.toFixed(3)}"
-                </div>
-                <StackList stack={setup.result.bottomOpening.stack} />
-              </div>
-              <div className={styles.cutCardSide}>
-                <div className={styles.cutCardSideTitle}>
-                  Top — {setup.result.topOpening.target.toFixed(3)}"
-                </div>
-                <StackList stack={setup.result.topOpening.stack} />
-              </div>
-            </div>
-          </div>
+          <SetupCard
+            title="Opening Shoulders"
+            side1={{ label: "Bottom", result: setup.result.bottomOpening }}
+            side2={{ label: "Top", result: setup.result.topOpening }}
+          />
 
           {/* Setup Sheet — one card per strip */}
           {setup.result.stripResults.map((sr, i) => (
-            <div key={`${sr.stripWidth}-${i}`} className={styles.cutCard}>
-              <div className={styles.cutCardHeader}>
-                <span><strong>{sr.stripWidth.toFixed(3)}"</strong> x{sr.quantity}</span>
-                {sr.dualResult.offset !== 0 && (
+            <SetupCard
+              key={`${sr.stripWidth}-${i}`}
+              title={`${sr.stripWidth.toFixed(3)}" x${sr.quantity}`}
+              extraHeader={
+                sr.dualResult.offset !== 0 && (
                   <span>
                     Offset: {sr.dualResult.offset > 0 ? "+" : ""}
                     {sr.dualResult.offset.toFixed(3)}"
                   </span>
-                )}
-              </div>
-              <div className={styles.cutCardBody}>
-                <div className={styles.cutCardSide}>
-                  <div className={styles.cutCardSideTitle}>
-                    Male — {(sr.nominalMale + sr.dualResult.offset).toFixed(3)}"
-                  </div>
-                  <StackList stack={sr.dualResult.maleResult.stack} />
-                </div>
-                <div className={styles.cutCardSide}>
-                  <div className={styles.cutCardSideTitle}>
-                    Female — {(sr.nominalFemale + sr.dualResult.offset).toFixed(3)}"
-                  </div>
-                  <StackList stack={sr.dualResult.femaleResult.stack} />
-                </div>
-              </div>
-            </div>
+                )
+              }
+              side1={{
+                label: "Male",
+                result: sr.dualResult.maleResult
+              }}
+              side2={{
+                label: "Female",
+                result: sr.dualResult.femaleResult
+              }}
+            />
           ))}
 
           {/* Closing Shoulders */}
-          <div className={styles.cutCard}>
-            <div className={styles.cutCardHeader}>
-              <span><strong>Closing Shoulders</strong></span>
-            </div>
-            <div className={styles.cutCardBody}>
-              <div className={styles.cutCardSide}>
-                <div className={styles.cutCardSideTitle}>
-                  Bottom — {setup.result.bottomClosing.target.toFixed(3)}"
-                </div>
-                <StackList stack={setup.result.bottomClosing.stack} />
-              </div>
-              <div className={styles.cutCardSide}>
-                <div className={styles.cutCardSideTitle}>
-                  Top — {setup.result.topClosing.target.toFixed(3)}"
-                </div>
-                <StackList stack={setup.result.topClosing.stack} />
-              </div>
-            </div>
-          </div>
+          <SetupCard
+            title="Closing Shoulders"
+            side1={{ label: "Bottom", result: setup.result.bottomClosing }}
+            side2={{ label: "Top", result: setup.result.topClosing }}
+          />
           </div>{/* end printArea */}
         </div>
       )}

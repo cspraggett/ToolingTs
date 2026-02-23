@@ -3,6 +3,10 @@
 ## Overview
 This project is a React (TypeScript) application for calculating slitter setup tooling. It handles complex optimization for "male" and "female" tooling pairs within specified tolerance windows.
 
+## Mandatory Boundaries
+- **CRITICAL**: Never merge the `feature/full-setup` branch into `main` without explicit permission from the user.
+- The `main` branch should only be updated with individual files (like `README.md`) if requested, but the core feature code must remain isolated in the feature branch until final approval.
+
 ## Current State: `feature/full-setup` branch
 We recently completed a major refactor of the Full Setup feature to improve maintainability and readability.
 

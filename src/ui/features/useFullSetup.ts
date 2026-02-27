@@ -12,7 +12,7 @@ export interface StripEntry {
   plusTol: string;
 }
 
-export interface StripResult {
+export interface CutResult {
   stripWidth: number;
   quantity: number;
   nominalMale: number;
@@ -21,7 +21,7 @@ export interface StripResult {
 }
 
 export interface FullSetupResult {
-  stripResults: StripResult[];
+  cuts: CutResult[];
   grandTotalTools: number;
   totalKnives: number;
   stripTotal: number;
@@ -31,6 +31,7 @@ export interface FullSetupResult {
   coilWeight: string;
   gauge: string;
   edgeTrim: number;
+  clearance: number;
   bottomOpening: SolverResult;
   topOpening: SolverResult;
   bottomClosing: SolverResult;
@@ -57,7 +58,7 @@ function makeStrip(): StripEntry {
  * Validates and transforms raw input strings into numerical data,
  * then performs the full tooling setup calculation.
  */
-function calculateFullSetup(
+export function calculateFullSetup(
   inputs: FullSetupInputs,
   strips: StripEntry[],
   machine: MachineProfile
@@ -89,14 +90,12 @@ function calculateFullSetup(
   }
 
   // 2. Deduplicate identical strip widths
-  // Physically, we set up one station per unique width. We group them to find a single tooling solution.
   const uniqueWidthMap = new Map<string, { width: number; quantity: number; minus: number; plus: number }>();
   for (const strip of parsedStrips) {
     const widthKey = strip.width.toFixed(3);
     const existingEntry = uniqueWidthMap.get(widthKey);
     if (existingEntry) {
       existingEntry.quantity += strip.quantity;
-      // We take the largest allowed tolerance window if they vary.
       existingEntry.minus = Math.max(existingEntry.minus, strip.minus);
       existingEntry.plus = Math.max(existingEntry.plus, strip.plus);
     } else {
@@ -106,7 +105,7 @@ function calculateFullSetup(
 
   const uniqueStrips = Array.from(uniqueWidthMap.values());
 
-  // 3. Compute physical coil usage and check against arbor limits
+  // 3. Compute physical coil usage
   const { totalKnives, stripTotal, arborUsed } = computeCoilUsage(uniqueStrips, knifeSize);
 
   if (stripTotal > coilWidth) {
@@ -116,20 +115,18 @@ function calculateFullSetup(
     return { result: null, error: `Setup (${stripTotal.toFixed(3)}" cuts + ${totalKnives} knives) exceeds arbor length (${machine.arborLength}").` };
   }
 
-  // 4. Solve for each unique strip setup (Male and Female tooling)
-  const stripResults: StripResult[] = [];
+  // 4. Solve for each unique strip setup
+  const cuts: CutResult[] = [];
   let grandTotalTools = 0;
 
   for (const strip of uniqueStrips) {
     const nominalFemale = strip.width;
-    // Calculation: Male = Width - (2 * Knife) - (2 * Clearance)
     const nominalMale = strip.width - knifeSize * 2 - clearance * 2;
 
     if (nominalMale <= 0) {
       return { result: null, error: `Strip ${strip.width.toFixed(3)}": knives + clearance exceed the strip width.` };
     }
 
-    // Optimization: find the best tooling stack for both male and female within tolerances.
     const dualResult = findBestDualSetup(
       nominalMale,
       nominalFemale,
@@ -140,7 +137,13 @@ function calculateFullSetup(
 
     if (!dualResult) return { result: null, error: `No solution found for strip width ${strip.width.toFixed(3)}".` };
 
-    stripResults.push({ stripWidth: strip.width, quantity: strip.quantity, nominalMale, nominalFemale, dualResult });
+    cuts.push({
+      stripWidth: strip.width,
+      quantity: strip.quantity,
+      nominalMale,
+      nominalFemale,
+      dualResult
+    });
     grandTotalTools += dualResult.totalToolCount * strip.quantity;
   }
 
@@ -148,7 +151,7 @@ function calculateFullSetup(
   const { bottomClearance, topClearance } = computeKnifeClearance(knifeSize, clearance, machine.knifeClearanceOffsets);
   const shoulders = computeShoulders(stripTotal, machine.arborLength, knifeSize, bottomClearance, topClearance);
 
-  // 6. Solve tooling stacks for all 4 shoulders (Opening/Closing, Top/Bottom)
+  // 6. Solve tooling stacks for all 4 shoulders
   const shoulderTargets = [
     { key: "bottomOpening" as const, value: shoulders.bottomOpening, strict: true },
     { key: "topOpening" as const, value: shoulders.topOpening, strict: true },
@@ -166,7 +169,7 @@ function calculateFullSetup(
   return {
     error: null,
     result: {
-      stripResults,
+      cuts,
       grandTotalTools,
       totalKnives,
       stripTotal,
@@ -176,6 +179,7 @@ function calculateFullSetup(
       coilWeight: inputs.coilWeight,
       gauge: inputs.gauge,
       edgeTrim: coilWidth - stripTotal,
+      clearance,
       bottomOpening: solvedShoulders.bottomOpening,
       topOpening: solvedShoulders.topOpening,
       bottomClosing: solvedShoulders.bottomClosing,

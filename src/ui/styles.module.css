@@ -141,13 +141,6 @@
   color: #2c7a7b;
 }
 
-.recValue {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #234e52;
-}
-
 .recCount {
   margin: 0.5rem 0 0;
   font-size: 0.9rem;
@@ -421,6 +414,19 @@
   line-height: 1.4;
 }
 
+.targetSize {
+  margin-top: 0.75rem;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.femaleTargetBox {
+  display: inline-block;
+  border: 2px solid #000;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
 /* === PRINT BUTTON === */
 
 .btnPrint {
@@ -475,11 +481,6 @@
 
   .recTitle {
     font-size: 18px;
-    font-weight: bold;
-  }
-
-  .recValue {
-    font-size: 20px;
     font-weight: bold;
   }
 

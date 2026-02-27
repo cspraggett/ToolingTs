@@ -20,8 +20,8 @@ function StackList({ stack }: { stack: Tool[] }) {
 
 interface SetupCardProps {
   title: string;
-  side1: { label: string; result: SolverResult };
-  side2: { label: string; result: SolverResult };
+  side1: { label: string; result: SolverResult; isFemale?: boolean };
+  side2: { label: string; result: SolverResult; isFemale?: boolean };
   extraHeader?: React.ReactNode;
 }
 
@@ -35,15 +35,25 @@ function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) {
       <div className={styles.cutCardBody}>
         <div className={styles.cutCardSide}>
           <div className={styles.cutCardSideTitle}>
-            {side1.label} — {side1.result.target.toFixed(3)}"
+            {side1.label}
           </div>
           <StackList stack={side1.result.stack} />
+          <div className={styles.targetSize}>
+            <span className={side1.isFemale ? styles.femaleTargetBox : ""}>
+              {side1.result.target.toFixed(3)}"
+            </span>
+          </div>
         </div>
         <div className={styles.cutCardSide}>
           <div className={styles.cutCardSideTitle}>
-            {side2.label} — {side2.result.target.toFixed(3)}"
+            {side2.label}
           </div>
           <StackList stack={side2.result.stack} />
+          <div className={styles.targetSize}>
+            <span className={side2.isFemale ? styles.femaleTargetBox : ""}>
+              {side2.result.target.toFixed(3)}"
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -296,7 +306,7 @@ export function FullSetupMode() {
           <div className={styles.recommendationBox}>
             <p className={styles.recTitle}>Setup Summary</p>
             {(setup.result.orderNumber || setup.result.companyName) && (
-              <p className={styles.recCount}>
+              <p className={styles.recCount} style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>
                 {setup.result.orderNumber && (
                   <>Order: <strong>{setup.result.orderNumber}</strong></>
                 )}
@@ -306,9 +316,6 @@ export function FullSetupMode() {
                 )}
               </p>
             )}
-            <p className={styles.recValue}>
-              {setup.result.grandTotalTools} tools | {setup.result.totalKnives} knives
-            </p>
             <p className={styles.recCount}>
               Coil Width: <strong>{setup.result.coilWidth.toFixed(3)}"</strong>
               {setup.result.coilWeight && (
@@ -317,6 +324,7 @@ export function FullSetupMode() {
               {setup.result.gauge && (
                 <> | Gauge: <strong>{parseFloat(setup.result.gauge).toFixed(3)}"</strong></>
               )}
+              {" | "} Clearance: <strong>{setup.result.clearance.toFixed(3)}"</strong>
             </p>
             <p className={styles.recCount}>
               Edge Trim: <strong>{setup.result.edgeTrim.toFixed(3)}"</strong>
@@ -326,35 +334,42 @@ export function FullSetupMode() {
                 <span style={{ color: "red" }}> (Shoulders below 1"!)</span>
               )}
             </p>
+            <p className={styles.recCount} style={{ marginTop: "0.5rem", borderTop: "1px solid #ddd", paddingTop: "0.5rem" }}>
+              Total: {setup.result.grandTotalTools} tools | {setup.result.totalKnives} knives
+            </p>
           </div>
 
           {/* Opening Shoulders */}
           <SetupCard
             title="Opening Shoulders"
-            side1={{ label: "Bottom", result: setup.result.bottomOpening }}
-            side2={{ label: "Top", result: setup.result.topOpening }}
+            side1={{ label: "Bottom", result: setup.result.bottomOpening, isFemale: false }}
+            side2={{ label: "Top", result: setup.result.topOpening, isFemale: false }}
           />
 
-          {/* Setup Sheet — one card per strip */}
-          {setup.result.stripResults.map((sr, i) => (
+          {/* Setup Sheet — one card per unique cut */}
+          {setup.result.cuts.map((c, i) => (
             <SetupCard
-              key={`${sr.stripWidth}-${i}`}
-              title={`${sr.stripWidth.toFixed(3)}" x${sr.quantity}`}
+              key={`${c.stripWidth}-${i}`}
+              title={`${c.stripWidth.toFixed(3)}" x ${c.quantity}`}
               extraHeader={
-                sr.dualResult.offset !== 0 && (
-                  <span>
-                    Offset: {sr.dualResult.offset > 0 ? "+" : ""}
-                    {sr.dualResult.offset.toFixed(3)}"
-                  </span>
-                )
+                <div style={{ textAlign: "right" }}>
+                  {c.dualResult.offset !== 0 && (
+                    <div style={{ fontSize: "0.9rem" }}>
+                      Offset: {c.dualResult.offset > 0 ? "+" : ""}
+                      {c.dualResult.offset.toFixed(3)}"
+                    </div>
+                  )}
+                </div>
               }
               side1={{
-                label: "Male",
-                result: sr.dualResult.maleResult
+                label: "Bottom (Male)",
+                result: c.dualResult.maleResult,
+                isFemale: false
               }}
               side2={{
-                label: "Female",
-                result: sr.dualResult.femaleResult
+                label: "Top (Female)",
+                result: c.dualResult.femaleResult,
+                isFemale: true
               }}
             />
           ))}
@@ -362,8 +377,8 @@ export function FullSetupMode() {
           {/* Closing Shoulders */}
           <SetupCard
             title="Closing Shoulders"
-            side1={{ label: "Bottom", result: setup.result.bottomClosing }}
-            side2={{ label: "Top", result: setup.result.topClosing }}
+            side1={{ label: "Bottom", result: setup.result.bottomClosing, isFemale: false }}
+            side2={{ label: "Top", result: setup.result.topClosing, isFemale: false }}
           />
           </div>{/* end printArea */}
         </div>

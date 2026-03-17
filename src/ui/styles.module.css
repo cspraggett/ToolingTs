@@ -141,13 +141,6 @@
   color: #2c7a7b;
 }
 
-.recValue {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #234e52;
-}
-
 .recCount {
   margin: 0.5rem 0 0;
   font-size: 0.9rem;
@@ -271,4 +264,266 @@
   display: flex;
   gap: 10px;
   margin-bottom: 1.5rem;
+}
+
+/* === FULL SETUP === */
+
+.containerWide {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+}
+
+.btnToggle {
+  padding: 0.4rem 0.75rem;
+  background-color: #edf2f7;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.flexRowTop {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.stripListHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.stripListHeaderLeft h3 {
+  margin: 0;
+}
+
+.stripListHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.stripRow {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  margin-bottom: 6px;
+}
+
+.stripQtyCol {
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.stripTolCol {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.stripTolInput {
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 0.6rem 0.3rem;
+  text-align: center;
+  margin-bottom: 0;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+.btnRemoveSpacer {
+  width: 30px;
+  flex-shrink: 0;
+}
+
+.btnAddStrip {
+  padding: 0.4rem 0.75rem;
+  background-color: #38a169;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.btnRemoveStrip {
+  padding: 0.4rem 0.6rem;
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.cutCard {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  text-align: center;
+}
+
+.cutCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background-color: #f7fafc;
+  border-bottom: 1px solid #ddd;
+  font-size: 1.3rem;
+}
+
+.cutCardBody {
+  display: flex;
+}
+
+.cutCardSide {
+  flex: 1;
+  padding: 0.75rem 1rem;
+}
+
+.cutCardSide + .cutCardSide {
+  border-left: 1px solid #ddd;
+}
+
+.cutCardSideTitle {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+  color: #2d3748;
+}
+
+.stackList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stackLine {
+  font-size: 1.3rem;
+  line-height: 1.4;
+}
+
+.targetSize {
+  margin-top: 0.75rem;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.femaleTargetBox {
+  display: inline-block;
+  border: 2px solid #000;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+/* === PRINT BUTTON === */
+
+.btnPrint {
+  padding: 0.5rem 1.25rem;
+  background-color: #2d3748;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+/* === PRINT STYLES === */
+
+@media print {
+  @page {
+    size: portrait;
+    margin: 0.4in;
+  }
+
+  /* Hide everything except printable area */
+  :global(body *) {
+    visibility: hidden;
+  }
+
+  .printArea,
+  .printArea * {
+    visibility: visible;
+  }
+
+  .printArea {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    font-size: 12px;
+  }
+
+  /* Hide the print button itself */
+  .btnPrint {
+    display: none;
+  }
+
+  /* Compact summary banner */
+  .recommendationBox {
+    background-color: #fff;
+    border: 2px solid #333;
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .recTitle {
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .recCount {
+    margin: 0.2rem 0 0;
+    font-size: 14px;
+  }
+
+  /* Compact cards */
+  .cutCard {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+    border: 1px solid #000;
+  }
+
+  .cutCardHeader {
+    background-color: #fff;
+    padding: 0.3rem 0.6rem;
+    font-size: 18px;
+    font-weight: bold;
+    border-bottom: 1px solid #000;
+  }
+
+  .cutCardSide {
+    padding: 0.5rem 0.8rem;
+  }
+
+  .cutCardSideTitle {
+    font-size: 16px;
+    margin-bottom: 0.2rem;
+    font-weight: bold;
+    color: #000;
+    text-decoration: underline;
+  }
+
+  .stackLine {
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1.3;
+    color: #000;
+  }
+
+  .stackList {
+    gap: 0.4rem;
+  }
 }

@@ -63,25 +63,25 @@ When calculating strip stations, the optimizer iterates through **0.001" increme
     ```
 2.  Install dependencies:
     ```bash
-    npm install
+    pnpm install
     ```
 
 ### Development
 Start the development server:
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 ### Testing
 Run the suite of unit tests for the core solver and optimizer:
 ```bash
-npm test
+pnpm test
 ```
 
 ### Deployment
 The project is configured for GitHub Pages. To deploy:
 ```bash
-npm run deploy
+pnpm run deploy
 ```
 
 ---

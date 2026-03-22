@@ -60,8 +60,16 @@ export interface ArborCut {
   type: 'male-bottom' | 'female-bottom';
 }
 
+export interface GroupedArborCut {
+  startIdx: number;
+  endIdx: number;
+  count: number;
+  cut: ArborCut;
+}
+
 export interface FullSetupResult {
   cuts: ArborCut[];
+  groupedCuts: GroupedArborCut[];
   grandTotalTools: number;
   totalKnives: number;
   stripTotal: number;
@@ -79,6 +87,45 @@ export interface FullSetupResult {
   bottomClosing: SolverResult;
   topClosing: SolverResult;
   shouldersValid: boolean;
+}
+
+/**
+ * Groups consecutive identical cuts into a single summary.
+ */
+function summarizeCuts(cuts: ArborCut[]): GroupedArborCut[] {
+  if (cuts.length === 0) return [];
+  
+  const groups: GroupedArborCut[] = [];
+  
+  let currentGroup: GroupedArborCut = {
+    startIdx: cuts[0].cutIndex,
+    endIdx: cuts[0].cutIndex,
+    count: 1,
+    cut: cuts[0]
+  };
+  
+  for (let i = 1; i < cuts.length; i++) {
+    const s = cuts[i];
+    const prev = currentGroup.cut;
+    
+    // Group consecutive cuts with the same strip width.
+    const isMatch = s.width === prev.width;
+                    
+    if (isMatch) {
+      currentGroup.endIdx = s.cutIndex;
+      currentGroup.count++;
+    } else {
+      groups.push(currentGroup);
+      currentGroup = {
+        startIdx: s.cutIndex,
+        endIdx: s.cutIndex,
+        count: 1,
+        cut: s
+      };
+    }
+  }
+  groups.push(currentGroup);
+  return groups;
 }
 
 /**
@@ -184,6 +231,7 @@ export function generateFullSetup(
 
   return ok({
     cuts,
+    groupedCuts: summarizeCuts(cuts),
     grandTotalTools,
     totalKnives,
     stripTotal,

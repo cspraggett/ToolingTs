@@ -2,8 +2,9 @@ import { useState } from "react";
 import { MACHINES } from "../../config/machine-profiles";
 import { Tool, SolverResult } from "../../core/solver";
 import { summarizeStack } from "../../core/utils";
+import { GroupedArborCut } from "../../core/engine";
 import styles from "../styles.module.css";
-import { useFullSetup, ArborCut } from "./useFullSetup";
+import { useFullSetup } from "./useFullSetup";
 
 function StackList({ stack }: { stack: Tool[] }) {
   const summary = summarizeStack(stack);
@@ -58,52 +59,6 @@ function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) {
       </div>
     </div>
   );
-}
-
-/**
- * Groups consecutive identical cuts into a single summary.
- * We group by width to allow "Short View" to consolidate multiple identical cuts.
- */
-function summarizeCuts(cuts: ArborCut[]) {
-  if (cuts.length === 0) return [];
-  
-  const groups: { 
-    startIdx: number; 
-    endIdx: number; 
-    count: number; 
-    cut: ArborCut 
-  }[] = [];
-  
-  let currentGroup = {
-    startIdx: cuts[0].cutIndex,
-    endIdx: cuts[0].cutIndex,
-    count: 1,
-    cut: cuts[0]
-  };
-  
-  for (let i = 1; i < cuts.length; i++) {
-    const s = cuts[i];
-    const prev = currentGroup.cut;
-    
-    // Group consecutive cuts with the same strip width.
-    // Since arbors alternate, we just show the base setup for this width in Short View.
-    const isMatch = s.width === prev.width;
-                    
-    if (isMatch) {
-      currentGroup.endIdx = s.cutIndex;
-      currentGroup.count++;
-    } else {
-      groups.push(currentGroup);
-      currentGroup = {
-        startIdx: s.cutIndex,
-        endIdx: s.cutIndex,
-        count: 1,
-        cut: s
-      };
-    }
-  }
-  groups.push(currentGroup);
-  return groups;
 }
 
 export function FullSetupMode() {
@@ -418,7 +373,7 @@ export function FullSetupMode() {
           {/* Setup Sheet */}
           {viewMode === 'short' ? (
             // Short View: Grouped consecutive cuts
-            summarizeCuts(setup.result.cuts).map((group, i) => (
+            setup.result.groupedCuts.map((group: GroupedArborCut, i: number) => (
               <SetupCard
                 key={`group-${i}`}
                 title={group.count > 1 

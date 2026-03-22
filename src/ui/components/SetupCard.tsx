@@ -1,16 +1,17 @@
 import React from "react";
 import { ToolSummary, formatInches } from "../../core/utils";
-import styles from "../styles.module.css";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export function StackList({ summary }: { summary: ToolSummary[] }) {
   return (
-    <div className={styles.stackList}>
+    <ul className="space-y-1 my-3 text-sm">
       {summary.map((s, i) => (
-        <div key={i} className={styles.stackLine}>
-          {s.count} x {formatInches(s.size)}"{s.label ? ` ${s.label}` : ""}
-        </div>
+        <li key={i} className="flex justify-between border-b border-border/50 pb-1 last:border-0">
+          <span>{s.count} x</span>
+          <span className="font-medium">{formatInches(s.size)}"{s.label ? ` ${s.label}` : ""}</span>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -23,35 +24,39 @@ interface SetupCardProps {
 
 export function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) {
   return (
-    <div className={styles.cutCard}>
-      <div className={styles.cutCardHeader}>
-        <span><strong>{title}</strong></span>
-        {extraHeader}
-      </div>
-      <div className={styles.cutCardBody}>
-        <div className={styles.cutCardSide}>
-          <div className={styles.cutCardSideTitle}>
-            {side1.label}
-          </div>
-          <StackList summary={side1.summary} />
-          <div className={styles.targetSize}>
-            <span className={side1.isFemale ? styles.femaleTargetBox : ""}>
+    <Card className="break-inside-avoid">
+      <CardHeader className="bg-muted/30 py-3 border-b">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-base font-bold">{title}</CardTitle>
+          {extraHeader}
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="grid grid-cols-2 divide-x">
+          <div className="p-4 flex flex-col h-full">
+            <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              {side1.label}
+            </div>
+            <div className="flex-grow">
+              <StackList summary={side1.summary} />
+            </div>
+            <div className={`mt-4 pt-3 border-t text-center font-bold text-lg ${side1.isFemale ? "bg-primary/10 text-primary border-primary/20 rounded-md py-2 mt-2" : ""}`}>
               {formatInches(side1.target)}"
-            </span>
+            </div>
           </div>
-        </div>
-        <div className={styles.cutCardSide}>
-          <div className={styles.cutCardSideTitle}>
-            {side2.label}
-          </div>
-          <StackList summary={side2.summary} />
-          <div className={styles.targetSize}>
-            <span className={side2.isFemale ? styles.femaleTargetBox : ""}>
+          <div className="p-4 flex flex-col h-full">
+            <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+              {side2.label}
+            </div>
+            <div className="flex-grow">
+              <StackList summary={side2.summary} />
+            </div>
+            <div className={`mt-4 pt-3 border-t text-center font-bold text-lg ${side2.isFemale ? "bg-primary/10 text-primary border-primary/20 rounded-md py-2 mt-2" : ""}`}>
               {formatInches(side2.target)}"
-            </span>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

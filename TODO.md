@@ -11,7 +11,7 @@
 - [ ] **UI Snapshot Testing**: Prevent layout regressions in the "Setup Sheet" view.
 
 ## 3. UI/UX Modernization (Professionalism)
-- [ ] **Component Library Integration**: Transition to `shadcn/ui` or a similar Radix-based library for pro-grade interactive elements.
+- [x] **Component Library Integration**: Transition to `shadcn/ui` or a similar Radix-based library for pro-grade interactive elements.
 - [ ] **Interactive Visualizations**: Add a canvas-based preview of the arbor layout to help operators visualize the setup before physically building it.
 - [ ] **Offline Support (PWA)**: Ensure the calculator works in parts of the plant with poor Wi-Fi.
 

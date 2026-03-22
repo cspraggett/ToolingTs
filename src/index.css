@@ -130,19 +130,27 @@
     display: none !important;
   }
 
+  /* Utility to show things ONLY in print */
+  .print-only {
+    display: block !important;
+  }
+
   body {
     background: white !important;
     color: black !important;
     font-size: 10pt;
   }
 
-  /* Force B&W */
+  /* Force B&W and strip backgrounds */
   * {
     color: black !important;
+    background: none !important;
     background-color: transparent !important;
     border-color: #000 !important;
     box-shadow: none !important;
     text-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .print-break-after {

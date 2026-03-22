@@ -19,7 +19,7 @@ export function SetupForm({ setup }: SetupFormProps) {
   const [showOptimizer, setShowOptimizer] = useState(false);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 no-print">
       {/* === MACHINE SELECTOR === */}
       <div className="space-y-2 border-b pb-4">
         <Label>Select Workstation</Label>

@@ -14,9 +14,9 @@ export default function SteelToolingCalculator() {
   const singleTools = useSteelTooling();
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      <div className={`mx-auto p-6 md:p-10 ${mode === "fullSetup" ? "max-w-6xl" : "max-w-2xl"}`}>
-        <header className="mb-10 text-center">
+    <div className="min-h-screen bg-slate-50/50 print:bg-white print:p-0">
+      <div className={`mx-auto p-6 md:p-10 ${mode === "fullSetup" ? "max-w-6xl" : "max-w-2xl"} print:max-w-none print:p-0`}>
+        <header className="mb-10 text-center no-print">
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">
             Steel Tooling <span className="text-primary">Calculator</span>
           </h1>
@@ -24,13 +24,13 @@ export default function SteelToolingCalculator() {
         </header>
 
         <Tabs value={mode} onValueChange={setMode} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-8 h-12 bg-slate-200/50 p-1 border shadow-sm rounded-xl">
+          <TabsList className="grid w-full grid-cols-3 mb-8 h-12 bg-slate-200/50 p-1 border shadow-sm rounded-xl no-print">
             <TabsTrigger value="single" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">Single Spacer</TabsTrigger>
             <TabsTrigger value="makeCut" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">Make Cut</TabsTrigger>
             <TabsTrigger value="fullSetup" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all">Full Setup</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="single" className="mt-0 outline-none">
+          <TabsContent value="single" className="mt-0 outline-none print:hidden">
             <Card className="shadow-lg border-slate-200 overflow-hidden">
               <div className="h-1.5 bg-primary w-full" />
               <CardHeader className="pb-4">
@@ -67,7 +67,7 @@ export default function SteelToolingCalculator() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="makeCut" className="mt-0 outline-none">
+          <TabsContent value="makeCut" className="mt-0 outline-none print:hidden">
             <Card className="shadow-lg border-slate-200 overflow-hidden">
               <div className="h-1.5 bg-primary w-full" />
               <CardHeader className="pb-4">
@@ -80,14 +80,14 @@ export default function SteelToolingCalculator() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="fullSetup" className="mt-0 outline-none">
-            <Card className="shadow-lg border-slate-200 overflow-hidden">
-              <div className="h-1.5 bg-primary w-full" />
-              <CardHeader className="pb-4">
+          <TabsContent value="fullSetup" className="mt-0 outline-none print:p-0">
+            <Card className="shadow-lg border-slate-200 overflow-hidden print:shadow-none print:border-none print:bg-transparent">
+              <div className="h-1.5 bg-primary w-full no-print" />
+              <CardHeader className="pb-4 no-print">
                 <CardTitle className="text-2xl">Full Setup Mode</CardTitle>
                 <CardDescription className="text-slate-500 font-medium">Generate a complete master arbor layout for multiple strips.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="print:p-0">
                 <FullSetupMode />
               </CardContent>
             </Card>
@@ -97,3 +97,4 @@ export default function SteelToolingCalculator() {
     </div>
   );
 }
+

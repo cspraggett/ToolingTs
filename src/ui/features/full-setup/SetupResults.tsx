@@ -177,7 +177,7 @@ export function SetupResults({ result }: SetupResultsProps) {
       </div>
 
       {/* --- PRINT ONLY VIEW --- */}
-      <div className="hidden print:block text-black bg-white min-h-screen">
+      <div className="hidden print-only text-black bg-white min-h-screen">
         {/* Simple Header on Page 1 */}
         <div className="border-b-4 border-black pb-4 mb-8">
           <div className="flex justify-between items-baseline mb-4">

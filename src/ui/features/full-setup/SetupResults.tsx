@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { formatInches } from "../../../core/utils";
-import { GroupedArborCut, FullSetupResult } from "../../../core/engine";
+import { GroupedArborCut, FullSetupResult, ArborCut } from "../../../core/engine";
 import { SetupCard } from "../../components/SetupCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +9,23 @@ interface SetupResultsProps {
   result: FullSetupResult;
 }
 
+/**
+ * Helper to split an array into chunks of a specific size.
+ */
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
 export function SetupResults({ result }: SetupResultsProps) {
   const [viewMode, setViewMode] = useState<'short' | 'long'>('short');
+
+  const cutsToDisplay = viewMode === 'short' ? result.groupedCuts : result.cuts;
+  // Type cast to any or a union to satisfy TS since chunkArray is generic
+  const cutChunks = chunkArray(cutsToDisplay as any[], 3);
 
   return (
     <div className="mt-8 space-y-6">
@@ -35,8 +50,26 @@ export function SetupResults({ result }: SetupResultsProps) {
       </div>
 
       <div className="print:m-0 space-y-6">
-        {/* Summary Banner */}
-        <Card className="bg-primary text-primary-foreground border-none shadow-xl relative overflow-hidden">
+        {/* --- PRINT ONLY HEADER (Simple Coil Info) --- */}
+        <div className="hidden print:block border-b-2 border-black pb-4 mb-6">
+          <div className="flex justify-between items-baseline mb-2">
+            <h1 className="text-2xl font-black">SLITTER SETUP SHEET</h1>
+            <div className="text-right text-sm font-bold">
+              {new Date().toLocaleDateString()}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm font-bold">
+            <div>Order: {result.orderNumber || "N/A"}</div>
+            <div>Company: {result.companyName || "N/A"}</div>
+            <div>Coil Width: {formatInches(result.coilWidth)}"</div>
+            <div>Gauge: {result.gauge ? `${formatInches(parseFloat(result.gauge))}"` : "N/A"}</div>
+            <div>Clearance: {formatInches(result.clearance)}"</div>
+            <div>Edge Trim: {formatInches(result.edgeTrim)}"</div>
+          </div>
+        </div>
+
+        {/* Summary Banner (Web Only) */}
+        <Card className="bg-primary text-primary-foreground border-none shadow-xl relative overflow-hidden no-print">
           {/* Decorative background circle */}
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
           
@@ -97,61 +130,67 @@ export function SetupResults({ result }: SetupResultsProps) {
           </CardContent>
         </Card>
 
+        {/* --- SHOULDERS FIRST IN PRINT --- */}
         <div className="space-y-4">
-          {/* Opening Shoulders */}
           <SetupCard
             title="Opening Shoulders"
             side1={{ label: "Bottom", target: result.bottomOpening.target, summary: result.bottomOpeningSummary }}
             side2={{ label: "Top", target: result.topOpening.target, summary: result.topOpeningSummary }}
           />
 
-          {/* Setup Sheet */}
-          {viewMode === 'short' ? (
-            // Short View: Grouped consecutive cuts
-            result.groupedCuts.map((group: GroupedArborCut, i: number) => (
-              <SetupCard
-                key={`group-${i}`}
-                title={group.count > 1 
-                  ? `${formatInches(group.cut.width)}" x ${group.count} (Cuts ${group.startIdx}–${group.endIdx})`
-                  : `Cut ${group.startIdx}: ${formatInches(group.cut.width)}"`
+          {/* Setup Sheet with Page Breaks */}
+          {cutChunks.map((chunk, chunkIdx) => (
+            <div key={`chunk-${chunkIdx}`} className={chunkIdx < cutChunks.length - 1 ? "space-y-4 print-break-after" : "space-y-4"}>
+              {chunk.map((item, i) => {
+                const isGrouped = 'count' in item;
+                if (isGrouped) {
+                  const group = item as GroupedArborCut;
+                  return (
+                    <SetupCard
+                      key={`group-${chunkIdx}-${i}`}
+                      title={group.count > 1 
+                        ? `${formatInches(group.cut.width)}" x ${group.count} (Cuts ${group.startIdx}–${group.endIdx})`
+                        : `Cut ${group.startIdx}: ${formatInches(group.cut.width)}"`
+                      }
+                      side1={{
+                        label: "Bottom",
+                        target: group.cut.bottomStack.target,
+                        summary: group.cut.bottomSummary,
+                        isFemale: group.cut.type === 'female-bottom'
+                      }}
+                      side2={{
+                        label: "Top",
+                        target: group.cut.topStack.target,
+                        summary: group.cut.topSummary,
+                        isFemale: group.cut.type === 'male-bottom'
+                      }}
+                    />
+                  );
+                } else {
+                  const s = item as ArborCut;
+                  return (
+                    <SetupCard
+                      key={`cut-${s.cutIndex}-${chunkIdx}-${i}`}
+                      title={`Cut ${s.cutIndex}: ${formatInches(s.width)}"`}
+                      side1={{
+                        label: s.type === 'male-bottom' ? "Bottom (Male)" : "Bottom (Female)",
+                        target: s.bottomStack.target,
+                        summary: s.bottomSummary,
+                        isFemale: s.type === 'female-bottom'
+                      }}
+                      side2={{
+                        label: s.type === 'male-bottom' ? "Top (Female)" : "Top (Male)",
+                        target: s.topStack.target,
+                        summary: s.topSummary,
+                        isFemale: s.type === 'male-bottom'
+                      }}
+                    />
+                  );
                 }
-                side1={{
-                  label: "Bottom",
-                  target: group.cut.bottomStack.target,
-                  summary: group.cut.bottomSummary,
-                  isFemale: group.cut.type === 'female-bottom'
-                }}
-                side2={{
-                  label: "Top",
-                  target: group.cut.topStack.target,
-                  summary: group.cut.topSummary,
-                  isFemale: group.cut.type === 'male-bottom'
-                }}
-              />
-            ))
-          ) : (
-            // Long View: Every cut listed individually
-            result.cuts.map((s, i) => (
-              <SetupCard
-                key={`cut-${s.cutIndex}-${i}`}
-                title={`Cut ${s.cutIndex}: ${formatInches(s.width)}"`}
-                side1={{
-                  label: s.type === 'male-bottom' ? "Bottom (Male)" : "Bottom (Female)",
-                  target: s.bottomStack.target,
-                  summary: s.bottomSummary,
-                  isFemale: s.type === 'female-bottom'
-                }}
-                side2={{
-                  label: s.type === 'male-bottom' ? "Top (Female)" : "Top (Male)",
-                  target: s.topStack.target,
-                  summary: s.topSummary,
-                  isFemale: s.type === 'male-bottom'
-                }}
-              />
-            ))
-          )}
+              })}
+            </div>
+          ))}
 
-          {/* Closing Shoulders */}
           <SetupCard
             title="Closing Shoulders"
             side1={{ label: "Bottom", target: result.bottomClosing.target, summary: result.bottomClosingSummary }}
@@ -162,3 +201,4 @@ export function SetupResults({ result }: SetupResultsProps) {
     </div>
   );
 }
+

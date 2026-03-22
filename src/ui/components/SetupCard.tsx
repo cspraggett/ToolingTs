@@ -10,7 +10,7 @@ export function StackList({ summary }: { summary: ToolSummary[] }) {
           <span className="font-bold text-slate-400 tabular-nums">{s.count} x</span>
           <span className="font-black text-slate-800 tabular-nums tracking-tight">
             {formatInches(s.size)}"
-            {s.label && <span className="ml-1 text-primary italic font-black uppercase text-[10px]">{s.label}</span>}
+            {s.label && <span className="ml-1 text-primary italic font-black uppercase text-[10px] print:text-black print:not-italic">{s.label}</span>}
           </span>
         </li>
       ))}
@@ -43,7 +43,7 @@ export function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) 
             <div className="flex-grow">
               <StackList summary={side1.summary} />
             </div>
-            <div className={`mt-4 pt-3 border-t border-slate-100 text-center font-black text-xl tracking-tighter ${side1.isFemale ? "text-primary bg-primary/5 rounded-lg py-2 mt-2 border-primary/10 shadow-inner" : "text-slate-900"}`}>
+            <div className={`mt-4 pt-3 border-t border-slate-100 text-center font-black text-xl tracking-tighter ${side1.isFemale ? "text-primary bg-primary/5 rounded-lg py-2 mt-2 border-primary/10 shadow-inner print:border-2 print:border-black print:bg-transparent" : "text-slate-900"}`}>
               {formatInches(side1.target)}"
             </div>
           </div>
@@ -54,7 +54,7 @@ export function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) 
             <div className="flex-grow">
               <StackList summary={side2.summary} />
             </div>
-            <div className={`mt-4 pt-3 border-t border-slate-100 text-center font-black text-xl tracking-tighter ${side2.isFemale ? "text-primary bg-primary/5 rounded-lg py-2 mt-2 border-primary/10 shadow-inner" : "text-slate-900"}`}>
+            <div className={`mt-4 pt-3 border-t border-slate-100 text-center font-black text-xl tracking-tighter ${side2.isFemale ? "text-primary bg-primary/5 rounded-lg py-2 mt-2 border-primary/10 shadow-inner print:border-2 print:border-black print:bg-transparent" : "text-slate-900"}`}>
               {formatInches(side2.target)}"
             </div>
           </div>

@@ -120,3 +120,42 @@
     @apply font-black text-slate-500 text-[10px] uppercase tracking-widest;
   }
 }
+
+@media print {
+  @page {
+    margin: 0.5in;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 10pt;
+  }
+
+  /* Force B&W */
+  * {
+    color: black !important;
+    background-color: transparent !important;
+    border-color: #ccc !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .print-break-after {
+    break-after: page;
+  }
+
+  /* Ensure card borders show in print */
+  .card, .border {
+    border: 1px solid black !important;
+  }
+
+  /* Tighter spacing for print */
+  .p-6, .p-4 {
+    padding: 0.25in !important;
+  }
+}

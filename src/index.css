@@ -155,19 +155,15 @@
   }
 
   .print-page {
-    page-break-after: always;
-    break-after: page;
+    /* Remove forced page breaks between chunks */
     display: block;
     width: 100%;
-    clear: both;
   }
 
   /* Large bold text for operators */
   .print-header {
-    font-size: 24pt;
-    font-weight: 900;
-    border-bottom: 4pt solid black;
-    margin-bottom: 15pt;
+    border-bottom: 2pt solid black;
+    margin-bottom: 8pt;
   }
 
   .print-label {

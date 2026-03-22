@@ -4,30 +4,32 @@
 This project is a React (TypeScript) application for calculating slitter setup tooling. It handles complex optimization for "male" and "female" tooling pairs within specified tolerance windows.
 
 ## Mandatory Boundaries
-- **CRITICAL**: Never merge the `feature/full-setup` branch into `main` without explicit permission from the user.
-- The `main` branch should only be updated with individual files (like `README.md`) if requested, but the core feature code must remain isolated in the feature branch until final approval.
+- **CRITICAL**: Never merge feature branches into `main` without explicit permission from the user.
+- The `main` branch should only be updated with individual files (like `README.md`) if requested, but core feature code must remain isolated in feature branches until final approval.
 
-## Current State: `feature/full-setup` branch
-We recently completed a major refactor of the Full Setup feature to improve maintainability and readability.
+## Current State: `feature/arbor-stations` branch
+We refactored the data structure to mirror the physical arbors of the slitting machine.
 
 ### Key Changes
-- **State Consolidation**: Moved individual input states in `useFullSetup.ts` into a single `inputs` object.
-- **Logic Extraction**: The core calculation logic was moved out of the hook into a pure function `calculateFullSetup`.
-- **UI Refactor**: Extracted the `SetupCard` component in `FullSetupMode.tsx` to handle repetitive layouts for Opening/Closing shoulders and individual strip stations.
-- **Naming Conventions**: Renamed shorthand variables (e.g., `cw` -> `coilWidth`, `clr` -> `clearance`, `s` -> `strip`) to be fully descriptive.
-- **Precision Improvement**: `summarizeStack` in `utils.ts` now uses `toFixed(4)` for Map keys to avoid floating-point grouping errors.
+- **Arbor Cuts**: Replaced the previous `cuts` array with an explicit `cuts` array of `ArborCut` objects. Each cut represents a single physical strip and contains both `bottomStack` and `topStack`.
+- **Alternating Logic**: Implementation ensures that Male and Female positions alternate across the arbors (Cut 1: Male-Bottom, Cut 2: Female-Bottom, etc.).
+- **Physical Widths**: The system now calculates the exact physical space used on each arbor individually: `Arbor Width = Spacers + (Cuts + 1) * Knife Size`.
+- **View Modes**: Added "Short View" (grouped identical consecutive cuts) and "Long View" (every cut listed individually) for reporting.
+- **Day View**: UI updated to use high-contrast light colors (Whites, Blues, Greens) to ensure visibility in high-light environments.
+- **Package Migration**: Project migrated from `npm` to `pnpm` and upgraded to Vite 8.
 
 ## Core Technical Logic
-- **Solver (`solver.ts`)**: Uses a **Greedy** approach for the bulk of the width and **Dynamic Programming (DP)** for the final precision gap (defined by `GREEDY_THRESHOLD_UNITS = 6000`, which is 6.000").
-- **Optimizer (`optimizer.ts`)**: Iterates through 0.001" increments within the user's tolerance window to find a setup that minimizes the total tool count across both male and female arbors.
-- **Shoulders (`utils.ts`)**: Calculates 4 specific points (Opening/Closing on Top/Bottom arbors) to center the setup, rounding the base to the nearest 1/8".
+- **Solver (`solver.ts`)**: Uses a **Greedy** approach for the bulk of the width and **Dynamic Programming (DP)** for the final precision gap.
+- **Optimizer (`optimizer.ts`)**: Iterates through 0.001" increments within the user's tolerance window to minimize total tool count across both arbors.
+- **Shoulders (`utils.ts`)**: Centers both arbors independently on the machine by calculating a `baseShoulder` from the material width and applying physical offsets (`bottomOpening = base + clearance`).
 
 ## Project Commands
-- **Dev**: `npm run dev` (Vite)
-- **Test**: `npm test` (Vitest)
-- **Deploy**: `npm run deploy` (Builds and pushes `dist/` to `gh-pages` branch)
+- **Dev**: `pnpm dev`
+- **Test**: `pnpm test`
+- **Build**: `pnpm build`
+- **Deploy**: `pnpm deploy` (Uses `gh-pages`)
 
 ## Important Notes
 - Always ensure `MachineProfile` is imported in `useFullSetup.ts` to avoid build failures.
 - The `vite.config.ts` has a `base` set to `/ToolingTs/` for GitHub Pages compatibility.
-- The user has indicated that the feature is **not yet finished**, so future work may involve additional validation or UI polish.
+- **Global Styles**: Global light mode is enforced in `index.css` to override system-level dark mode settings.

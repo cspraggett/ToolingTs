@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSteelTooling } from "./ui/features/useSteelTooling";
 import styles from "./ui/styles.module.css";
 import { ResultDisplay } from "./ui/components/ResultDisplay";
-import { StationCalculatorMode } from "./ui/features/StationCalculatorMode";
+import { CutCalculatorMode } from "./ui/features/CutCalculatorMode";
 import { FullSetupMode } from "./ui/features/FullSetupMode";
 
 type Mode = "single" | "makeCut" | "fullSetup";
@@ -54,7 +54,7 @@ export default function SteelToolingCalculator() {
           )}
         </>
       ) : mode === "makeCut" ? (
-        <StationCalculatorMode />
+        <CutCalculatorMode />
       ) : (
         <FullSetupMode />
       )}

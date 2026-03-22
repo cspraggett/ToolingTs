@@ -3,7 +3,7 @@ import { MACHINES } from "../../config/machine-profiles";
 import { Tool, SolverResult } from "../../core/solver";
 import { summarizeStack } from "../../core/utils";
 import styles from "../styles.module.css";
-import { useFullSetup } from "./useFullSetup";
+import { useFullSetup, ArborCut } from "./useFullSetup";
 
 function StackList({ stack }: { stack: Tool[] }) {
   const summary = summarizeStack(stack);
@@ -60,10 +60,57 @@ function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) {
   );
 }
 
+/**
+ * Groups consecutive identical cuts into a single summary.
+ * We group by width to allow "Short View" to consolidate multiple identical cuts.
+ */
+function summarizeCuts(cuts: ArborCut[]) {
+  if (cuts.length === 0) return [];
+  
+  const groups: { 
+    startIdx: number; 
+    endIdx: number; 
+    count: number; 
+    cut: ArborCut 
+  }[] = [];
+  
+  let currentGroup = {
+    startIdx: cuts[0].cutIndex,
+    endIdx: cuts[0].cutIndex,
+    count: 1,
+    cut: cuts[0]
+  };
+  
+  for (let i = 1; i < cuts.length; i++) {
+    const s = cuts[i];
+    const prev = currentGroup.cut;
+    
+    // Group consecutive cuts with the same strip width.
+    // Since arbors alternate, we just show the base setup for this width in Short View.
+    const isMatch = s.width === prev.width;
+                    
+    if (isMatch) {
+      currentGroup.endIdx = s.cutIndex;
+      currentGroup.count++;
+    } else {
+      groups.push(currentGroup);
+      currentGroup = {
+        startIdx: s.cutIndex,
+        endIdx: s.cutIndex,
+        count: 1,
+        cut: s
+      };
+    }
+  }
+  groups.push(currentGroup);
+  return groups;
+}
+
 export function FullSetupMode() {
   const setup = useFullSetup();
   const { inputs, handleInputChange } = setup;
   const [showOptimizer, setShowOptimizer] = useState(false);
+  const [viewMode, setViewMode] = useState<'short' | 'long'>('short');
 
   return (
     <div>
@@ -298,9 +345,26 @@ export function FullSetupMode() {
       {/* RESULTS */}
       {setup.result && (
         <div className={styles.resultsArea}>
-          <button onClick={() => window.print()} className={styles.btnPrint}>
-            Print Setup
-          </button>
+          <div className={styles.btnGroup}>
+            <button onClick={() => window.print()} className={styles.btnPrint}>
+              Print Setup
+            </button>
+            <div className={styles.viewToggle}>
+              <button 
+                className={viewMode === 'short' ? styles.viewToggleActive : styles.viewToggleBtn}
+                onClick={() => setViewMode('short')}
+              >
+                Short View
+              </button>
+              <button 
+                className={viewMode === 'long' ? styles.viewToggleActive : styles.viewToggleBtn}
+                onClick={() => setViewMode('long')}
+              >
+                Long View
+              </button>
+            </div>
+          </div>
+
           <div className={styles.printArea}>
           {/* Summary Banner */}
           <div className={styles.recommendationBox}>
@@ -334,6 +398,11 @@ export function FullSetupMode() {
                 <span style={{ color: "red" }}> (Shoulders below 1"!)</span>
               )}
             </p>
+            <p className={styles.recCount}>
+              Bottom Arbor: <strong>{setup.result.bottomArborUsed.toFixed(3)}"</strong>
+              {" | "}
+              Top Arbor: <strong>{setup.result.topArborUsed.toFixed(3)}"</strong>
+            </p>
             <p className={styles.recCount} style={{ marginTop: "0.5rem", borderTop: "1px solid #ddd", paddingTop: "0.5rem" }}>
               Total: {setup.result.grandTotalTools} tools | {setup.result.totalKnives} knives
             </p>
@@ -342,43 +411,57 @@ export function FullSetupMode() {
           {/* Opening Shoulders */}
           <SetupCard
             title="Opening Shoulders"
-            side1={{ label: "Bottom", result: setup.result.bottomOpening, isFemale: false }}
-            side2={{ label: "Top", result: setup.result.topOpening, isFemale: false }}
+            side1={{ label: "Bottom", result: setup.result.bottomOpening }}
+            side2={{ label: "Top", result: setup.result.topOpening }}
           />
 
-          {/* Setup Sheet — one card per unique cut */}
-          {setup.result.cuts.map((c, i) => (
-            <SetupCard
-              key={`${c.stripWidth}-${i}`}
-              title={`${c.stripWidth.toFixed(3)}" x ${c.quantity}`}
-              extraHeader={
-                <div style={{ textAlign: "right" }}>
-                  {c.dualResult.offset !== 0 && (
-                    <div style={{ fontSize: "0.9rem" }}>
-                      Offset: {c.dualResult.offset > 0 ? "+" : ""}
-                      {c.dualResult.offset.toFixed(3)}"
-                    </div>
-                  )}
-                </div>
-              }
-              side1={{
-                label: "Bottom (Male)",
-                result: c.dualResult.maleResult,
-                isFemale: false
-              }}
-              side2={{
-                label: "Top (Female)",
-                result: c.dualResult.femaleResult,
-                isFemale: true
-              }}
-            />
-          ))}
+          {/* Setup Sheet */}
+          {viewMode === 'short' ? (
+            // Short View: Grouped consecutive cuts
+            summarizeCuts(setup.result.cuts).map((group, i) => (
+              <SetupCard
+                key={`group-${i}`}
+                title={group.count > 1 
+                  ? `${group.cut.width.toFixed(3)}" x ${group.count} (Cuts ${group.startIdx}–${group.endIdx})`
+                  : `Cut ${group.startIdx}: ${group.cut.width.toFixed(3)}"`
+                }
+                side1={{
+                  label: "Bottom",
+                  result: group.cut.bottomStack,
+                  isFemale: group.cut.type === 'female-bottom'
+                }}
+                side2={{
+                  label: "Top",
+                  result: group.cut.topStack,
+                  isFemale: group.cut.type === 'male-bottom'
+                }}
+              />
+            ))
+          ) : (
+            // Long View: Every cut listed individually
+            setup.result.cuts.map((s, i) => (
+              <SetupCard
+                key={`cut-${s.cutIndex}-${i}`}
+                title={`Cut ${s.cutIndex}: ${s.width.toFixed(3)}"`}
+                side1={{
+                  label: s.type === 'male-bottom' ? "Bottom (Male)" : "Bottom (Female)",
+                  result: s.bottomStack,
+                  isFemale: s.type === 'female-bottom'
+                }}
+                side2={{
+                  label: s.type === 'male-bottom' ? "Top (Female)" : "Top (Male)",
+                  result: s.topStack,
+                  isFemale: s.type === 'male-bottom'
+                }}
+              />
+            ))
+          )}
 
           {/* Closing Shoulders */}
           <SetupCard
             title="Closing Shoulders"
-            side1={{ label: "Bottom", result: setup.result.bottomClosing, isFemale: false }}
-            side2={{ label: "Top", result: setup.result.topClosing, isFemale: false }}
+            side1={{ label: "Bottom", result: setup.result.bottomClosing }}
+            side2={{ label: "Top", result: setup.result.topClosing }}
           />
           </div>{/* end printArea */}
         </div>

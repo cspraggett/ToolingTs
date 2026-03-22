@@ -13,7 +13,7 @@ The latest version is deployed to GitHub Pages:
 ### 1. Single Mode
 Quickly calculate a single tooling stack for any target width.
 
-### 2. Station Calculator (Make Cut)
+### 2. Cut Calculator (Make Cut)
 Handles "Dual Setup" optimization where both Male and Female tooling are calculated for a specific strip width. It automatically finds the best setup within your allowed tolerance window.
 
 ### 3. Full Setup (New 🛠️)
@@ -33,7 +33,7 @@ The application uses a hybrid approach for maximum efficiency:
 - **Dynamic Programming (DP)**: Solves the final precision gap (last 6.000") to find the mathematically optimal stack using the fewest total tools.
 
 ### Dual Optimization
-When calculating strip stations, the optimizer iterates through **0.001" increments** within the user's tolerance window. It prioritizes:
+When calculating strip cuts, the optimizer iterates through **0.001" increments** within the user's tolerance window. It prioritizes:
 1.  **Minimum Tool Count**: Reduces setup time and physical error.
 2.  **Nominal Accuracy**: If multiple setups use the same number of tools, it selects the one closest to the target width.
 

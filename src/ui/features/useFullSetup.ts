@@ -1,5 +1,5 @@
 import { useState, ChangeEvent } from "react";
-import { findBestDualSetup, DualOptimizationResult } from "../../core/optimizer";
+import { findBestDualSetup } from "../../core/optimizer";
 import { findToolingSetup, SolverResult } from "../../core/solver";
 import { MACHINES, DEFAULT_MACHINE, MachineProfile } from "../../config/machine-profiles";
 import { computeCoilUsage, computeKnifeClearance, computeShoulders } from "../../core/utils";
@@ -12,19 +12,21 @@ export interface StripEntry {
   plusTol: string;
 }
 
-export interface CutResult {
-  stripWidth: number;
-  quantity: number;
-  nominalMale: number;
-  nominalFemale: number;
-  dualResult: DualOptimizationResult;
+export interface ArborCut {
+  cutIndex: number; // 1, 2, 3...
+  width: number;
+  bottomStack: SolverResult;
+  topStack: SolverResult;
+  type: 'male-bottom' | 'female-bottom';
 }
 
 export interface FullSetupResult {
-  cuts: CutResult[];
+  cuts: ArborCut[];
   grandTotalTools: number;
   totalKnives: number;
   stripTotal: number;
+  bottomArborUsed: number;
+  topArborUsed: number;
   orderNumber: string;
   companyName: string;
   coilWidth: number;
@@ -89,24 +91,8 @@ export function calculateFullSetup(
     parsedStrips.push({ width, quantity, minus: minusTolerance, plus: plusTolerance });
   }
 
-  // 2. Deduplicate identical strip widths
-  const uniqueWidthMap = new Map<string, { width: number; quantity: number; minus: number; plus: number }>();
-  for (const strip of parsedStrips) {
-    const widthKey = strip.width.toFixed(3);
-    const existingEntry = uniqueWidthMap.get(widthKey);
-    if (existingEntry) {
-      existingEntry.quantity += strip.quantity;
-      existingEntry.minus = Math.max(existingEntry.minus, strip.minus);
-      existingEntry.plus = Math.max(existingEntry.plus, strip.plus);
-    } else {
-      uniqueWidthMap.set(widthKey, { ...strip });
-    }
-  }
-
-  const uniqueStrips = Array.from(uniqueWidthMap.values());
-
-  // 3. Compute physical coil usage
-  const { totalKnives, stripTotal, arborUsed } = computeCoilUsage(uniqueStrips, knifeSize);
+  // 2. Compute physical coil usage (using ALL strips to verify space)
+  const { totalKnives, stripTotal, arborUsed } = computeCoilUsage(parsedStrips, knifeSize);
 
   if (stripTotal > coilWidth) {
     return { result: null, error: `Total cut width (${stripTotal.toFixed(3)}") exceeds coil width (${coilWidth.toFixed(3)}").` };
@@ -115,11 +101,12 @@ export function calculateFullSetup(
     return { result: null, error: `Setup (${stripTotal.toFixed(3)}" cuts + ${totalKnives} knives) exceeds arbor length (${machine.arborLength}").` };
   }
 
-  // 4. Solve for each unique strip setup
-  const cuts: CutResult[] = [];
+  // 3. Create all individual cuts (No deduplication)
+  const cuts: ArborCut[] = [];
   let grandTotalTools = 0;
+  let cutCounter = 1;
 
-  for (const strip of uniqueStrips) {
+  for (const strip of parsedStrips) {
     const nominalFemale = strip.width;
     const nominalMale = strip.width - knifeSize * 2 - clearance * 2;
 
@@ -137,19 +124,49 @@ export function calculateFullSetup(
 
     if (!dualResult) return { result: null, error: `No solution found for strip width ${strip.width.toFixed(3)}".` };
 
-    cuts.push({
-      stripWidth: strip.width,
-      quantity: strip.quantity,
-      nominalMale,
-      nominalFemale,
-      dualResult
-    });
-    grandTotalTools += dualResult.totalToolCount * strip.quantity;
+    // Create a cut for each quantity
+    for (let i = 0; i < strip.quantity; i++) {
+      // Logic: Cut 1 is Male-Bottom, Cut 2 is Female-Bottom, etc.
+      const type: 'male-bottom' | 'female-bottom' = (cutCounter % 2 !== 0) ? 'male-bottom' : 'female-bottom';
+      
+      cuts.push({
+        cutIndex: cutCounter,
+        width: strip.width,
+        bottomStack: type === 'male-bottom' ? dualResult.maleResult : dualResult.femaleResult,
+        topStack: type === 'male-bottom' ? dualResult.femaleResult : dualResult.maleResult,
+        type
+      });
+      
+      grandTotalTools += dualResult.totalToolCount;
+      cutCounter++;
+    }
   }
 
-  // 5. Compute clearance and arbor centering shoulders
+  // 4. Compute physical arbor setup widths (User Advice)
+  // Each arbor has (n + 1) knives where n is the total number of cuts.
+  const setupKnivesCount = cuts.length + 1;
+  const bottomSpacersTotal = cuts.reduce((sum, s) => sum + s.bottomStack.target, 0);
+  const topSpacersTotal = cuts.reduce((sum, s) => sum + s.topStack.target, 0);
+  
+  const bottomArborUsed = bottomSpacersTotal + setupKnivesCount * knifeSize;
+  const topArborUsed = topSpacersTotal + setupKnivesCount * knifeSize;
+
+  if (bottomArborUsed > machine.arborLength || topArborUsed > machine.arborLength) {
+    const maxArbor = Math.max(bottomArborUsed, topArborUsed);
+    return { result: null, error: `Physical setup (${maxArbor.toFixed(3)}") exceeds arbor length (${machine.arborLength}").` };
+  }
+
+  // 5. Compute arbor centering shoulders
   const { bottomClearance, topClearance } = computeKnifeClearance(knifeSize, clearance, machine.knifeClearanceOffsets);
-  const shoulders = computeShoulders(stripTotal, machine.arborLength, knifeSize, bottomClearance, topClearance);
+  const shoulders = computeShoulders(
+    stripTotal,
+    machine.arborLength,
+    knifeSize,
+    bottomClearance,
+    topClearance,
+    bottomArborUsed,
+    topArborUsed
+  );
 
   // 6. Solve tooling stacks for all 4 shoulders
   const shoulderTargets = [
@@ -173,6 +190,8 @@ export function calculateFullSetup(
       grandTotalTools,
       totalKnives,
       stripTotal,
+      bottomArborUsed,
+      topArborUsed,
       orderNumber: inputs.orderNumber,
       companyName: inputs.companyName,
       coilWidth,

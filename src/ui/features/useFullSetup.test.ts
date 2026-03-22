@@ -16,7 +16,7 @@ describe('calculateFullSetup', () => {
 
   const machine = DEFAULT_MACHINE;
 
-  it('groups identical strips into a single cut result with correct quantity', () => {
+  it('creates individual cuts for identical strips instead of grouping', () => {
     const strips: StripEntry[] = [
       { id: '1', width: '5.000', quantity: '3', minusTol: '0.000', plusTol: '0.000' }
     ];
@@ -25,15 +25,29 @@ describe('calculateFullSetup', () => {
 
     expect(error).toBeNull();
     expect(result).not.toBeNull();
-    expect(result!.cuts).toHaveLength(1);
-    expect(result!.cuts[0].stripWidth).toBe(5.000);
-    expect(result!.cuts[0].quantity).toBe(3);
+    // 3 strips = 3 cuts
+    expect(result!.cuts).toHaveLength(3);
+    expect(result!.cuts[0].width).toBe(5.000);
+    expect(result!.cuts[1].width).toBe(5.000);
+    expect(result!.cuts[2].width).toBe(5.000);
+  });
+
+  it('alternates between male-bottom and female-bottom types', () => {
+    const strips: StripEntry[] = [
+      { id: '1', width: '5.000', quantity: '3', minusTol: '0.000', plusTol: '0.000' }
+    ];
+
+    const { result } = calculateFullSetup(baseInputs, strips, machine);
+
+    expect(result!.cuts[0].type).toBe('male-bottom');
+    expect(result!.cuts[1].type).toBe('female-bottom');
+    expect(result!.cuts[2].type).toBe('male-bottom');
   });
 
   it('generates unique cuts for different strip widths', () => {
     const strips: StripEntry[] = [
-      { id: '1', width: '4.000', quantity: '2', minusTol: '0.000', plusTol: '0.000' },
-      { id: '2', width: '6.000', quantity: '2', minusTol: '0.000', plusTol: '0.000' }
+      { id: '1', width: '4.000', quantity: '1', minusTol: '0.000', plusTol: '0.000' },
+      { id: '2', width: '6.000', quantity: '1', minusTol: '0.000', plusTol: '0.000' }
     ];
 
     const { result, error } = calculateFullSetup(baseInputs, strips, machine);
@@ -41,8 +55,8 @@ describe('calculateFullSetup', () => {
     expect(error).toBeNull();
     expect(result!.cuts).toHaveLength(2);
 
-    expect(result!.cuts[0].stripWidth).toBe(4.000);
-    expect(result!.cuts[1].stripWidth).toBe(6.000);
+    expect(result!.cuts[0].width).toBe(4.000);
+    expect(result!.cuts[1].width).toBe(6.000);
   });
 
   it('validates that total width + knives fits on arbor', () => {
@@ -58,7 +72,7 @@ describe('calculateFullSetup', () => {
     expect(error).toContain('exceeds arbor length');
   });
 
-  it('correctly calculates nominal male width', () => {
+  it('correctly calculates tooling targets for male and female sides', () => {
     // Male = Width - (2 * Knife) - (2 * Clearance)
     // 5.000 - (2 * 0.365) - (2 * 0.008) = 5.000 - 0.730 - 0.016 = 4.254
     const strips: StripEntry[] = [
@@ -66,7 +80,24 @@ describe('calculateFullSetup', () => {
     ];
 
     const { result } = calculateFullSetup(baseInputs, strips, machine);
-    expect(result!.cuts[0].nominalMale).toBeCloseTo(4.254);
-    expect(result!.cuts[0].nominalFemale).toBe(5.000);
+    const s1 = result!.cuts[0];
+    
+    // Cut 1 is male-bottom
+    expect(s1.type).toBe('male-bottom');
+    expect(s1.bottomStack.target).toBeCloseTo(4.254);
+    expect(s1.topStack.target).toBe(5.000);
+  });
+
+  it('calculates physical arbor widths correctly', () => {
+    // 1 strip of 5.000
+    // bottom = Male (4.254) + 2 knives (0.730) = 4.984
+    // top = Female (5.000) + 2 knives (0.730) = 5.730
+    const strips: StripEntry[] = [
+      { id: '1', width: '5.000', quantity: '1', minusTol: '0.000', plusTol: '0.000' }
+    ];
+
+    const { result } = calculateFullSetup(baseInputs, strips, machine);
+    expect(result!.bottomArborUsed).toBeCloseTo(4.984);
+    expect(result!.topArborUsed).toBeCloseTo(5.730);
   });
 });

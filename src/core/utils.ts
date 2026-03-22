@@ -88,21 +88,25 @@ export interface ShoulderResult {
  * "Closing" is the drive-side (end) of the arbor.
  */
 export function computeShoulders(
-  setupWidth: number,
+  stripTotal: number,
   arborLength: number,
   knifeWidth: number,
   bottomClearance: number,
   topClearance: number,
+  bottomArborUsed: number,
+  topArborUsed: number,
 ): ShoulderResult {
   // Base shoulder is the theoretical space on one side, rounded to the nearest 1/8".
-  const baseShoulder = Math.round(((arborLength - setupWidth) / 2) / EIGHTH_INCH) * EIGHTH_INCH;
+  const baseShoulder = Math.round(((arborLength - stripTotal) / 2) / EIGHTH_INCH) * EIGHTH_INCH;
+  
+  // To interleave knives, the top arbor is shifted by one knife width (rounded to 1/8").
   const knifeRoundedUp = Math.ceil(knifeWidth / EIGHTH_INCH) * EIGHTH_INCH;
 
   const bottomOpening = roundToTenThousandth(baseShoulder + bottomClearance);
   const topOpening = roundToTenThousandth(baseShoulder - knifeRoundedUp + topClearance);
   
-  const bottomClosing = roundToTenThousandth(arborLength - bottomOpening - setupWidth);
-  const topClosing = roundToTenThousandth(arborLength - topOpening - setupWidth);
+  const bottomClosing = roundToTenThousandth(arborLength - bottomOpening - bottomArborUsed);
+  const topClosing = roundToTenThousandth(arborLength - topOpening - topArborUsed);
 
   const minShoulder = Math.min(bottomOpening, topOpening, bottomClosing, topClosing);
   

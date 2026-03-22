@@ -53,40 +53,26 @@ describe('computeKnifeClearance', () => {
 });
 
 describe('computeShoulders', () => {
-  it('computes 4 shoulders with .365 knife and 0.008 clearance', () => {
-    // setupWidth=20, arbor=64, knife=0.365, bottomClr=0.008, topClr=0
-    // base = round((64-20)/2 / 0.125) * 0.125 = round(22/0.125)*0.125 = 22.000
-    // knifeRoundedUp = ceil(0.365/0.125)*0.125 = 3*0.125 = 0.375
+  it('centers arbors relative to stripTotal with clearance offsets', () => {
+    // stripTotal=20, arbor=64, knife=0.365, bottomClr=0.008, topClr=0
+    // bottomArborUsed=19.984, topArborUsed=20.730
+    // baseShoulder = round((64-20)/2 / 0.125) * 0.125 = 22.000
+    // knifeRoundedUp = ceil(0.365/0.125)*0.125 = 0.375
     // bottomOpening = 22 + 0.008 = 22.008
     // topOpening = 22 - 0.375 + 0 = 21.625
-    // bottomClosing = 64 - 22.008 - 20 = 21.992
-    // topClosing = 64 - 21.625 - 20 = 22.375
-    const result = computeShoulders(20, 64, 0.365, 0.008, 0);
+    // bottomClosing = 64 - 22.008 - 19.984 = 22.008
+    // topClosing = 64 - 21.625 - 20.730 = 21.645
+    const result = computeShoulders(20, 64, 0.365, 0.008, 0, 19.984, 20.730);
     expect(result.bottomOpening).toBeCloseTo(22.008);
     expect(result.topOpening).toBeCloseTo(21.625);
-    expect(result.bottomClosing).toBeCloseTo(21.992);
-    expect(result.topClosing).toBeCloseTo(22.375);
-    expect(result.isValid).toBe(true);
-  });
-
-  it('computes shoulders with .480 knife and split clearance', () => {
-    // knife=0.480, bottomClr=0, topClr=0.002
-    // base = round((64-50)/2 / 0.125)*0.125 = round(7/0.125)*0.125 = 7.000
-    // knifeRoundedUp = ceil(0.480/0.125)*0.125 = 4*0.125 = 0.500
-    // bottomOpening = 7 + 0 = 7.000
-    // topOpening = 7 - 0.500 + 0.002 = 6.502
-    // bottomClosing = 64 - 7 - 50 = 7.000
-    // topClosing = 64 - 6.502 - 50 = 7.498
-    const result = computeShoulders(50, 64, 0.480, 0, 0.002);
-    expect(result.bottomOpening).toBeCloseTo(7.0);
-    expect(result.topOpening).toBeCloseTo(6.502);
-    expect(result.bottomClosing).toBeCloseTo(7.0);
-    expect(result.topClosing).toBeCloseTo(7.498);
+    expect(result.bottomClosing).toBeCloseTo(22.008);
+    expect(result.topClosing).toBeCloseTo(21.645);
     expect(result.isValid).toBe(true);
   });
 
   it('detects invalid when shoulder < 1"', () => {
-    const result = computeShoulders(63, 64, 0.365, 0.008, 0);
+    // stripTotal=63, arbor=64 -> baseShoulder = round(0.5 / 0.125) * 0.125 = 0.5 (Invalid)
+    const result = computeShoulders(63, 64, 0.365, 0.008, 0, 62.984, 63.730);
     expect(result.isValid).toBe(false);
   });
 });

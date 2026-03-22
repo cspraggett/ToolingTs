@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { MACHINES } from "../../config/machine-profiles";
-import { Tool, SolverResult } from "../../core/solver";
-import { summarizeStack } from "../../core/utils";
+import { ToolSummary } from "../../core/utils";
 import { GroupedArborCut } from "../../core/engine";
 import styles from "../styles.module.css";
 import { useFullSetup } from "./useFullSetup";
 
-function StackList({ stack }: { stack: Tool[] }) {
-  const summary = summarizeStack(stack);
+function StackList({ summary }: { summary: ToolSummary[] }) {
   return (
     <div className={styles.stackList}>
       {summary.map((s, i) => (
@@ -21,8 +19,8 @@ function StackList({ stack }: { stack: Tool[] }) {
 
 interface SetupCardProps {
   title: string;
-  side1: { label: string; result: SolverResult; isFemale?: boolean };
-  side2: { label: string; result: SolverResult; isFemale?: boolean };
+  side1: { label: string; target: number; summary: ToolSummary[]; isFemale?: boolean };
+  side2: { label: string; target: number; summary: ToolSummary[]; isFemale?: boolean };
   extraHeader?: React.ReactNode;
 }
 
@@ -38,10 +36,10 @@ function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) {
           <div className={styles.cutCardSideTitle}>
             {side1.label}
           </div>
-          <StackList stack={side1.result.stack} />
+          <StackList summary={side1.summary} />
           <div className={styles.targetSize}>
             <span className={side1.isFemale ? styles.femaleTargetBox : ""}>
-              {side1.result.target.toFixed(3)}"
+              {side1.target.toFixed(3)}"
             </span>
           </div>
         </div>
@@ -49,10 +47,10 @@ function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) {
           <div className={styles.cutCardSideTitle}>
             {side2.label}
           </div>
-          <StackList stack={side2.result.stack} />
+          <StackList summary={side2.summary} />
           <div className={styles.targetSize}>
             <span className={side2.isFemale ? styles.femaleTargetBox : ""}>
-              {side2.result.target.toFixed(3)}"
+              {side2.target.toFixed(3)}"
             </span>
           </div>
         </div>
@@ -366,8 +364,8 @@ export function FullSetupMode() {
           {/* Opening Shoulders */}
           <SetupCard
             title="Opening Shoulders"
-            side1={{ label: "Bottom", result: setup.result.bottomOpening }}
-            side2={{ label: "Top", result: setup.result.topOpening }}
+            side1={{ label: "Bottom", target: setup.result.bottomOpening.target, summary: setup.result.bottomOpeningSummary }}
+            side2={{ label: "Top", target: setup.result.topOpening.target, summary: setup.result.topOpeningSummary }}
           />
 
           {/* Setup Sheet */}
@@ -382,12 +380,14 @@ export function FullSetupMode() {
                 }
                 side1={{
                   label: "Bottom",
-                  result: group.cut.bottomStack,
+                  target: group.cut.bottomStack.target,
+                  summary: group.cut.bottomSummary,
                   isFemale: group.cut.type === 'female-bottom'
                 }}
                 side2={{
                   label: "Top",
-                  result: group.cut.topStack,
+                  target: group.cut.topStack.target,
+                  summary: group.cut.topSummary,
                   isFemale: group.cut.type === 'male-bottom'
                 }}
               />
@@ -400,12 +400,14 @@ export function FullSetupMode() {
                 title={`Cut ${s.cutIndex}: ${s.width.toFixed(3)}"`}
                 side1={{
                   label: s.type === 'male-bottom' ? "Bottom (Male)" : "Bottom (Female)",
-                  result: s.bottomStack,
+                  target: s.bottomStack.target,
+                  summary: s.bottomSummary,
                   isFemale: s.type === 'female-bottom'
                 }}
                 side2={{
                   label: s.type === 'male-bottom' ? "Top (Female)" : "Top (Male)",
-                  result: s.topStack,
+                  target: s.topStack.target,
+                  summary: s.topSummary,
                   isFemale: s.type === 'male-bottom'
                 }}
               />
@@ -415,8 +417,8 @@ export function FullSetupMode() {
           {/* Closing Shoulders */}
           <SetupCard
             title="Closing Shoulders"
-            side1={{ label: "Bottom", result: setup.result.bottomClosing }}
-            side2={{ label: "Top", result: setup.result.topClosing }}
+            side1={{ label: "Bottom", target: setup.result.bottomClosing.target, summary: setup.result.bottomClosingSummary }}
+            side2={{ label: "Top", target: setup.result.topClosing.target, summary: setup.result.topClosingSummary }}
           />
           </div>{/* end printArea */}
         </div>

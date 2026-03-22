@@ -5,6 +5,8 @@ import {
   computeCoilUsage, 
   computeKnifeClearance, 
   computeShoulders,
+  summarizeStack,
+  ToolSummary,
   Result,
   ok,
   err
@@ -57,6 +59,8 @@ export interface ArborCut {
   width: number;
   bottomStack: SolverResult;
   topStack: SolverResult;
+  bottomSummary: ToolSummary[];
+  topSummary: ToolSummary[];
   type: 'male-bottom' | 'female-bottom';
 }
 
@@ -86,6 +90,10 @@ export interface FullSetupResult {
   topOpening: SolverResult;
   bottomClosing: SolverResult;
   topClosing: SolverResult;
+  bottomOpeningSummary: ToolSummary[];
+  topOpeningSummary: ToolSummary[];
+  bottomClosingSummary: ToolSummary[];
+  topClosingSummary: ToolSummary[];
   shouldersValid: boolean;
 }
 
@@ -176,11 +184,16 @@ export function generateFullSetup(
     for (let i = 0; i < strip.quantity; i++) {
       const type: 'male-bottom' | 'female-bottom' = (cutCounter % 2 !== 0) ? 'male-bottom' : 'female-bottom';
       
+      const bottomStack = type === 'male-bottom' ? dualResult.maleResult : dualResult.femaleResult;
+      const topStack = type === 'male-bottom' ? dualResult.femaleResult : dualResult.maleResult;
+
       cuts.push({
         cutIndex: cutCounter,
         width: strip.width,
-        bottomStack: type === 'male-bottom' ? dualResult.maleResult : dualResult.femaleResult,
-        topStack: type === 'male-bottom' ? dualResult.femaleResult : dualResult.maleResult,
+        bottomStack,
+        topStack,
+        bottomSummary: summarizeStack(bottomStack.stack),
+        topSummary: summarizeStack(topStack.stack),
         type
       });
       
@@ -248,6 +261,10 @@ export function generateFullSetup(
     topOpening: solvedShoulders.topOpening,
     bottomClosing: solvedShoulders.bottomClosing,
     topClosing: solvedShoulders.topClosing,
+    bottomOpeningSummary: summarizeStack(solvedShoulders.bottomOpening.stack),
+    topOpeningSummary: summarizeStack(solvedShoulders.topOpening.stack),
+    bottomClosingSummary: summarizeStack(solvedShoulders.bottomClosing.stack),
+    topClosingSummary: summarizeStack(solvedShoulders.topClosing.stack),
     shouldersValid: shoulders.isValid,
   });
 }

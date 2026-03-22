@@ -6,7 +6,7 @@
 - [x] **Strict Unit Branding**: Prevent "Inches vs Units" bugs by using TypeScript `Branded` types for physical measurements.
 
 ## 2. Testing & Verification (Maintainability)
-- [ ] **Property-Based Testing**: Use `fast-check` to verify that the `solver` and `optimizer` hold up under thousands of random width/tolerance combinations.
+- [x] **Property-Based Testing**: Use `fast-check` to verify that the `solver` and `optimizer` hold up under thousands of random width/tolerance combinations.
 - [ ] **Integration Test for Machine Profiles**: Ensure adding a new machine profile (e.g., Slitter 5) doesn't break existing logic.
 - [ ] **UI Snapshot Testing**: Prevent layout regressions in the "Setup Sheet" view.
 

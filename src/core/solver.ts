@@ -65,9 +65,11 @@ const solveOptimalStack = (targetUnits: number, inventory: Tool[]): Tool[] | nul
       if (nextTotalUnits > targetUnits) continue;
 
       // Limitation: We only allow a maximum of 2 tools of the same size per setup
-      // to avoid using up specific inventory sizes.
+      // for smaller tools to avoid using up specific inventory sizes.
+      // For large "block" spacers (1.0" and above), we allow more.
       const countOfThisToolUsed = currentStack.filter(t => t.size === tool.size).length;
-      if (countOfThisToolUsed >= 2) continue;
+      const maxAllowed = tool.size >= 1.0 ? 50 : 2;
+      if (countOfThisToolUsed >= maxAllowed) continue;
 
       const candidateStack = [...currentStack, tool];
       const existingBestStack = bestStackAtUnits[nextTotalUnits];

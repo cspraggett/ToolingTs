@@ -246,6 +246,12 @@ export function generateFullSetup(
   );
 
   // 5. Solve tooling stacks for shoulders
+  // Determine global precision for this setup to ensure shoulders and cuts agree
+  let globalPrecision = DEFAULT_UNITS_PER_INCH;
+  if (hasHalfThou(clearance) || strips.some(s => hasHalfThou(s.width)) || machine.tools.some(t => hasHalfThou(t))) {
+    globalPrecision = HALF_THOU_UNITS_PER_INCH;
+  }
+
   const shoulderTargets = [
     { key: "bottomOpening" as const, value: shoulders.bottomOpening, strict: true },
     { key: "topOpening" as const, value: shoulders.topOpening, strict: true },
@@ -255,11 +261,14 @@ export function generateFullSetup(
 
   const solvedShoulders: Record<string, SolverResult> = {};
   for (const target of shoulderTargets) {
-    const solution = findToolingSetup(target.value, machine, { 
+    // Normalize target to the requested precision to avoid floating point drift
+    const normalizedTarget = unitsToInches(inchesToUnits(target.value, globalPrecision), globalPrecision);
+
+    const solution = findToolingSetup(normalizedTarget, machine, { 
       strictMode: target.strict,
       skipClearanceFilter: true
     });
-    if (!solution) return err(`No tooling solution for ${target.key} shoulder (${target.value.toFixed(3)}").`);
+    if (!solution) return err(`No tooling solution for ${target.key} shoulder (${normalizedTarget.toFixed(3)}").`);
     solvedShoulders[target.key] = solution;
   }
 

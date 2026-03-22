@@ -55,7 +55,8 @@ export function useCutCalculator() {
       return;
     }
 
-    const dual = findBestDualSetup(nominalMale, nominalFemale, { minus: m, plus: p }, currentMachine, {
+    const clr = parseFloat(clearance) || 0;
+    const dual = findBestDualSetup(nominalMale, nominalFemale, { minus: m, plus: p }, currentMachine, clr, {
       strictMode: isStrictCapable && strictMode,
     });
 

@@ -1,5 +1,5 @@
 import { Tool } from './solver';
-import { MachineProfile, KnifeClearanceStrategy } from '../config/machine-profiles';
+import { KnifeClearanceStrategy } from '../config/machine-profiles';
 
 // --- Result Type (Rust-style) ---
 export type Result<T, E = string> = 

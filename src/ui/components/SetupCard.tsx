@@ -6,8 +6,8 @@ export function StackList({ summary }: { summary: ToolSummary[] }) {
   return (
     <ul className="space-y-1 my-2 text-sm">
       {summary.map((s, i) => (
-        <li key={i} className="flex justify-between items-center py-1 border-b border-slate-50 last:border-0">
-          <span className="font-bold text-slate-400 tabular-nums">{s.count} x</span>
+        <li key={i} className="flex gap-2 items-center py-1 border-b border-slate-50 last:border-0">
+          <span className="font-bold text-slate-400 tabular-nums min-w-[2.5rem]">{s.count} x</span>
           <span className="font-black text-slate-800 tabular-nums tracking-tight">
             {formatInches(s.size)}"
             {s.label && <span className="ml-1 text-primary italic font-black uppercase text-[10px] print:text-black print:not-italic">{s.label}</span>}

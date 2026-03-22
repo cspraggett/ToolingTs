@@ -1,5 +1,21 @@
 import { Tool } from './solver';
 
+/**
+ * BRANDED TYPES PATTERN
+ * These prevent developers from accidentally mixing up "Inches" and "ArborUnits"
+ * (which are 1000x or 2000x larger). Even though they are both numbers at runtime,
+ * TypeScript will throw an error if you try to pass an "Inches" where an "ArborUnits"
+ * is expected.
+ */
+export type Inches = number & { readonly __brand: "Inches" };
+export type ArborUnits = number & { readonly __brand: "ArborUnits" };
+
+/**
+ * Helper to cast a raw number to Inches.
+ * Use this only at input boundaries (like Zod parsing).
+ */
+export const asInches = (val: number): Inches => val as Inches;
+
 // --- Result Type (Rust-style) ---
 export type Result<T, E = string> = 
   | { ok: true; value: T } 
@@ -21,11 +37,11 @@ export const hasHalfThou = (val: number) => {
   return Math.abs(thousandths - Math.round(thousandths)) > 0.0001;
 };
 
-export const inchesToUnits = (inches: number, precision: number = DEFAULT_UNITS_PER_INCH) => 
-  Math.round(inches * precision);
+export const inchesToUnits = (inches: number, precision: number = DEFAULT_UNITS_PER_INCH): ArborUnits => 
+  Math.round(inches * precision) as ArborUnits;
 
-export const unitsToInches = (units: number, precision: number = DEFAULT_UNITS_PER_INCH) => 
-  units / precision;
+export const unitsToInches = (units: ArborUnits, precision: number = DEFAULT_UNITS_PER_INCH): Inches => 
+  (units / precision) as Inches;
 
 /**
  * Formats a numerical inch value for display.

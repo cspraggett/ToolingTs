@@ -11,7 +11,8 @@ import {
   hasHalfThou,
   inchesToUnits,
   unitsToInches,
-  formatInches
+  formatInches,
+  ArborUnits
 } from "../utils";
 import { 
   ArborCut, 
@@ -70,7 +71,7 @@ export function generateFullSetup(
       const knifeUnits = inchesToUnits(knifeSize, precision);
       const clearanceUnits = inchesToUnits(clearance, precision);
       
-      const maleUnits = femaleUnits - (knifeUnits * 2) - (clearanceUnits * 2);
+      const maleUnits = (femaleUnits - (knifeUnits * 2) - (clearanceUnits * 2)) as ArborUnits;
       const nominalMale = unitsToInches(maleUnits, precision);
 
       if (nominalMale <= 0) {

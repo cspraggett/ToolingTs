@@ -1,6 +1,7 @@
 import { useState, ChangeEvent } from "react";
-import { findBestDualSetup, DualOptimizationResult } from "../../core/optimizer";
+import { DualOptimizationResult } from "../../core/optimizer";
 import { MACHINES, DEFAULT_MACHINE } from "../../config/machine-profiles";
+import { calculateCut } from "../../core/cut-calculator/validator";
 
 export function useCutCalculator() {
   const [selectedMachineId, setSelectedMachineId] = useState(DEFAULT_MACHINE.id);
@@ -34,38 +35,15 @@ export function useCutCalculator() {
   };
 
   const handleCalculate = () => {
-    const val = parseFloat(cutSize);
-    const k = parseFloat(knifeSize);
-    const c = parseFloat(clearance);
-    const m = parseFloat(minusTol) || 0;
-    const p = parseFloat(plusTol) || 0;
+    const inputs = { cutSize, knifeSize, clearance, minusTol, plusTol, strictMode };
+    const res = calculateCut(inputs, currentMachine);
 
-    if (isNaN(val) || val <= 0) {
-      setError("Please enter a valid strip width.");
-      setResult(null);
-      return;
-    }
-
-    const nominalFemale = val;
-    const nominalMale = val - k * 2 - c * 2;
-
-    if (nominalMale <= 0) {
-      setError("Knives + Clearance exceed strip width.");
-      setResult(null);
-      return;
-    }
-
-    const clr = parseFloat(clearance) || 0;
-    const dual = findBestDualSetup(nominalMale, nominalFemale, { minus: m, plus: p }, currentMachine, clr, {
-      strictMode: isStrictCapable && strictMode,
-    });
-
-    if (!dual) {
-      setError("No tooling solution found for these targets.");
-      setResult(null);
-    } else {
+    if (res.ok) {
       setError(null);
-      setResult(dual);
+      setResult(res.value);
+    } else {
+      setError(res.error);
+      setResult(null);
     }
   };
 
@@ -81,8 +59,8 @@ export function useCutCalculator() {
   };
 
   const calculatedTargets = cutSize ? {
-    female: parseFloat(cutSize),
-    male: parseFloat(cutSize) - parseFloat(knifeSize) * 2 - parseFloat(clearance) * 2
+    female: parseFloat(cutSize) || 0,
+    male: (parseFloat(cutSize) || 0) - (parseFloat(knifeSize) || 0) * 2 - (parseFloat(clearance) || 0) * 2
   } : null;
 
   return {

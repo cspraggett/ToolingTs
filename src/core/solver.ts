@@ -3,12 +3,13 @@ import {
   inchesToUnits, 
   hasHalfThou, 
   DEFAULT_UNITS_PER_INCH, 
-  HALF_THOU_UNITS_PER_INCH 
+  HALF_THOU_UNITS_PER_INCH, 
+  ArborUnits
 } from './utils';
 
 export interface Tool {
   size: number;
-  units: number;
+  units: ArborUnits;
 }
 
 export interface SolverOptions {
@@ -51,7 +52,7 @@ const getActiveTools = (
  * Solves for the optimal stack of tools using Dynamic Programming.
  * It minimizes the number of tools used and breaks ties by preferring larger tools.
  */
-const solveOptimalStack = (targetUnits: number, inventory: Tool[]): Tool[] | null => {
+const solveOptimalStack = (targetUnits: ArborUnits, inventory: Tool[]): Tool[] | null => {
   // dp[units] stores the best (fewest tools) stack for that exact unit value.
   const bestStackAtUnits: (Tool[] | null)[] = new Array<Tool[] | null>(targetUnits + 1).fill(null);
   bestStackAtUnits[0] = [];
@@ -118,7 +119,7 @@ export function findToolingSetup(
   const activeTools = getActiveTools(machine, !!options.strictMode, precision, !!options.skipClearanceFilter);
 
   // We use Greedy logic for widths larger than this buffer (6 inches).
-  const GREEDY_THRESHOLD_UNITS = 6.0 * precision; 
+  const GREEDY_THRESHOLD_UNITS = (6.0 * precision) as ArborUnits; 
   let unitsToSolveWithGreedy = targetUnits;
   const greedyStack: Tool[] = [];
 
@@ -126,7 +127,7 @@ export function findToolingSetup(
 
   // Fill the bulk of the width with the largest available tool.
   while (unitsToSolveWithGreedy > GREEDY_THRESHOLD_UNITS && unitsToSolveWithGreedy - largestAvailableTool.units >= 0) {
-    unitsToSolveWithGreedy -= largestAvailableTool.units;
+    unitsToSolveWithGreedy = (unitsToSolveWithGreedy - largestAvailableTool.units) as ArborUnits;
     greedyStack.push(largestAvailableTool);
   }
 

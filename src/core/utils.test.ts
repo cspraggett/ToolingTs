@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { summarizeStack } from './utils';
+import { summarizeStack, ArborUnits } from './utils';
 
 describe('summarizeStack', () => {
   it('groups tools by size and sorts by largest first', () => {
     const stack = [
-      { size: 1.0, units: 1000 },
-      { size: 0.5, units: 500 },
-      { size: 1.0, units: 1000 },
+      { size: 1.0, units: 1000 as ArborUnits },
+      { size: 0.5, units: 500 as ArborUnits },
+      { size: 1.0, units: 1000 as ArborUnits },
     ];
     const summary = summarizeStack(stack);
     expect(summary).toHaveLength(2);
@@ -16,8 +16,8 @@ describe('summarizeStack', () => {
 
   it('populates labels if provided', () => {
     const stack = [
-      { size: 0.0500, units: 50 },
-      { size: 0.0505, units: 50.5 },
+      { size: 0.0500, units: 50 as ArborUnits },
+      { size: 0.0505, units: 50.5 as ArborUnits },
     ];
     const labels = {
       0.0500: "a",

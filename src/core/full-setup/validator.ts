@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { MachineProfile } from "../../config/machine-profiles";
 import { 
   Result, 
@@ -9,9 +10,35 @@ import {
   FullSetupResult, 
   StripEntry, 
   ValidatedSetupConfig, 
-  ValidatedStrip 
 } from "./types";
 import { generateFullSetup } from "./logic";
+
+// --- ZOD SCHEMAS ---
+
+/**
+ * Validates a single strip entry from the UI.
+ * Handles conversion from string to number.
+ */
+const StripSchema = z.object({
+  width: z.coerce.number().positive("Strip width must be greater than 0."),
+  quantity: z.coerce.number().int().min(1, "Quantity must be at least 1."),
+  minusTol: z.coerce.number().min(0).max(0.500, "Tolerance max 0.500").default(0),
+  plusTol: z.coerce.number().min(0).max(0.500, "Tolerance max 0.500").default(0),
+});
+
+/**
+ * Validates the main setup configuration from the UI.
+ */
+const SetupConfigSchema = z.object({
+  orderNumber: z.string().optional(),
+  companyName: z.string().optional(),
+  coilWidth: z.coerce.number().positive("Coil width must be greater than 0."),
+  coilWeight: z.string().optional(),
+  gauge: z.string().optional(),
+  knifeSize: z.coerce.number().positive(),
+  clearance: z.coerce.number().min(0),
+  strictMode: z.boolean().default(false),
+});
 
 /**
  * BOUNDARY FUNCTION: Parsing & Validation
@@ -22,40 +49,48 @@ export function calculateFullSetup(
   strips: StripEntry[],
   machine: MachineProfile
 ): Result<FullSetupResult, string> {
-  const coilWidth = parseFloat(inputs.coilWidth);
-  const knifeSize = parseFloat(inputs.knifeSize);
-  const clearance = parseFloat(inputs.clearance);
+  // 1. Validate main inputs
+  const configParse = SetupConfigSchema.safeParse(inputs);
+  if (!configParse.success) {
+    // Return the first error found for simplicity in UI
+    return err(configParse.error.issues[0].message);
+  }
+  const config = configParse.data;
 
-  if (isNaN(coilWidth) || coilWidth <= 0) return err("Please enter a valid coil width.");
-  if (coilWidth > machine.arborLength) return err(`Coil width (${formatInches(coilWidth)}") exceeds arbor length (${machine.arborLength}").`);
-
-  const parsedStrips: ValidatedStrip[] = [];
-  for (const stripEntry of strips) {
-    const width = parseFloat(stripEntry.width);
-    const quantity = parseInt(stripEntry.quantity, 10);
-    const minus = parseFloat(stripEntry.minusTol) || 0;
-    const plus = parseFloat(stripEntry.plusTol) || 0;
-    
-    if (isNaN(width) || width <= 0) return err("Each strip width must be greater than 0.");
-    if (isNaN(quantity) || quantity < 1) return err("Each strip quantity must be at least 1.");
-    if (plus > 0.500 || minus > 0.500) {
-      return err(`Strip ${formatInches(width)}": tolerance is too large (Max 0.500).`);
-    }
-    
-    parsedStrips.push({ width, quantity, minus, plus });
+  // 2. Machine boundary check
+  if (config.coilWidth > machine.arborLength) {
+    return err(`Coil width (${formatInches(config.coilWidth)}") exceeds arbor length (${machine.arborLength}").`);
   }
 
-  const config: ValidatedSetupConfig = {
-    coilWidth,
-    knifeSize,
-    clearance,
-    strictMode: inputs.strictMode,
-    strips: parsedStrips,
-    orderNumber: inputs.orderNumber,
-    companyName: inputs.companyName,
-    coilWeight: inputs.coilWeight,
-    gauge: inputs.gauge,
+  // 3. Validate strips
+  const validatedStrips = [];
+  for (const s of strips) {
+    const stripParse = StripSchema.safeParse(s);
+    if (!stripParse.success) {
+      const errorMsg = stripParse.error.issues[0].message;
+      const widthContext = s.width ? `Strip ${s.width}": ` : "One of the strips: ";
+      return err(`${widthContext}${errorMsg}`);
+    }
+    
+    // Map to internal ValidatedStrip type
+    const data = stripParse.data;
+    validatedStrips.push({
+      width: data.width,
+      quantity: data.quantity,
+      minus: data.minusTol,
+      plus: data.plusTol
+    });
+  }
+
+  // 4. Assemble the final config for the engine
+  const fullConfig: ValidatedSetupConfig = {
+    ...config,
+    strips: validatedStrips,
+    orderNumber: config.orderNumber || "",
+    companyName: config.companyName || "",
+    coilWeight: config.coilWeight || "",
+    gauge: config.gauge || "",
   };
 
-  return generateFullSetup(config, machine);
+  return generateFullSetup(fullConfig, machine);
 }

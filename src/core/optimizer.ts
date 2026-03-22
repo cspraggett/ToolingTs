@@ -5,7 +5,8 @@ import {
   unitsToInches, 
   hasHalfThou, 
   DEFAULT_UNITS_PER_INCH, 
-  HALF_THOU_UNITS_PER_INCH 
+  HALF_THOU_UNITS_PER_INCH,
+  ArborUnits
 } from './utils';
 
 export interface ToleranceWindow {
@@ -56,7 +57,8 @@ export function findBestDualSetup(
   let bestDualResult: DualOptimizationResult | null = null;
 
   // We iterate through every possible increment within the tolerance window.
-  for (let currentOffsetUnits = -minOffsetUnits; currentOffsetUnits <= maxOffsetUnits; currentOffsetUnits++) {
+  for (let u = -minOffsetUnits; u <= maxOffsetUnits; u++) {
+    const currentOffsetUnits = u as ArborUnits;
     const currentOffsetInches = unitsToInches(currentOffsetUnits, precision);
 
     const candidateMaleTarget = maleTarget + currentOffsetInches;

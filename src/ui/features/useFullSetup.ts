@@ -43,9 +43,14 @@ export function useFullSetup() {
   };
 
   const handleCalculate = () => {
-    const { result, error } = calculateFullSetup(inputs, strips, currentMachine);
-    setResult(result);
-    setError(error);
+    const res = calculateFullSetup(inputs, strips, currentMachine);
+    if (res.ok) {
+      setResult(res.value);
+      setError(null);
+    } else {
+      setResult(null);
+      setError(res.error);
+    }
   };
 
   const handleReset = () => {

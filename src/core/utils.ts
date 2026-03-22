@@ -1,6 +1,14 @@
 import { Tool } from './solver';
 import { MachineProfile, KnifeClearanceStrategy } from '../config/machine-profiles';
 
+// --- Result Type (Rust-style) ---
+export type Result<T, E = string> = 
+  | { ok: true; value: T } 
+  | { ok: false; error: E };
+
+export const ok = <T>(value: T): Result<T, any> => ({ ok: true, value });
+export const err = <E>(error: E): Result<any, E> => ({ ok: false, error });
+
 // --- Shared Unit Conversion ---
 export const DEFAULT_UNITS_PER_INCH = 1000;
 export const HALF_THOU_UNITS_PER_INCH = 2000;

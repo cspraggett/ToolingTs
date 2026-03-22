@@ -1,7 +1,14 @@
 import { findBestDualSetup } from "./optimizer";
 import { findToolingSetup, SolverResult } from "./solver";
 import { MachineProfile } from "../config/machine-profiles";
-import { computeCoilUsage, computeKnifeClearance, computeShoulders } from "./utils";
+import { 
+  computeCoilUsage, 
+  computeKnifeClearance, 
+  computeShoulders,
+  Result,
+  ok,
+  err
+} from "./utils";
 
 // --- Input Types (Strings from UI) ---
 export interface StripEntry {
@@ -82,7 +89,7 @@ export interface FullSetupResult {
 export function generateFullSetup(
   config: ValidatedSetupConfig,
   machine: MachineProfile
-): { result: FullSetupResult | null; error: string | null } {
+): Result<FullSetupResult, string> {
   const { coilWidth, knifeSize, clearance, strictMode, strips } = config;
   const isStrictCapable = !!machine.strictExclude?.length;
 
@@ -90,10 +97,10 @@ export function generateFullSetup(
   const { totalKnives, stripTotal, arborUsed } = computeCoilUsage(strips, knifeSize);
 
   if (stripTotal > coilWidth) {
-    return { result: null, error: `Total cut width (${stripTotal.toFixed(3)}") exceeds coil width (${coilWidth.toFixed(3)}").` };
+    return err(`Total cut width (${stripTotal.toFixed(3)}") exceeds coil width (${coilWidth.toFixed(3)}").`);
   }
   if (arborUsed > machine.arborLength) {
-    return { result: null, error: `Setup (${stripTotal.toFixed(3)}" cuts + ${totalKnives} knives) exceeds arbor length (${machine.arborLength}").` };
+    return err(`Setup (${stripTotal.toFixed(3)}" cuts + ${totalKnives} knives) exceeds arbor length (${machine.arborLength}").`);
   }
 
   // 2. Create all individual cuts
@@ -106,7 +113,7 @@ export function generateFullSetup(
     const nominalMale = strip.width - knifeSize * 2 - clearance * 2;
 
     if (nominalMale <= 0) {
-      return { result: null, error: `Strip ${strip.width.toFixed(3)}": knives + clearance exceed the strip width.` };
+      return err(`Strip ${strip.width.toFixed(3)}": knives + clearance exceed the strip width.`);
     }
 
     const dualResult = findBestDualSetup(
@@ -117,7 +124,7 @@ export function generateFullSetup(
       { strictMode: isStrictCapable && strictMode }
     );
 
-    if (!dualResult) return { result: null, error: `No solution found for strip width ${strip.width.toFixed(3)}".` };
+    if (!dualResult) return err(`No solution found for strip width ${strip.width.toFixed(3)}".`);
 
     for (let i = 0; i < strip.quantity; i++) {
       const type: 'male-bottom' | 'female-bottom' = (cutCounter % 2 !== 0) ? 'male-bottom' : 'female-bottom';
@@ -145,7 +152,7 @@ export function generateFullSetup(
 
   if (bottomArborUsed > machine.arborLength || topArborUsed > machine.arborLength) {
     const maxArbor = Math.max(bottomArborUsed, topArborUsed);
-    return { result: null, error: `Physical setup (${maxArbor.toFixed(3)}") exceeds arbor length (${machine.arborLength}").` };
+    return err(`Physical setup (${maxArbor.toFixed(3)}") exceeds arbor length (${machine.arborLength}").`);
   }
 
   // 4. Compute arbor centering shoulders
@@ -171,33 +178,30 @@ export function generateFullSetup(
   const solvedShoulders: Record<string, SolverResult> = {};
   for (const target of shoulderTargets) {
     const solution = findToolingSetup(target.value, machine, { strictMode: target.strict });
-    if (!solution) return { result: null, error: `No tooling solution for ${target.key} shoulder (${target.value.toFixed(3)}").` };
+    if (!solution) return err(`No tooling solution for ${target.key} shoulder (${target.value.toFixed(3)}").`);
     solvedShoulders[target.key] = solution;
   }
 
-  return {
-    error: null,
-    result: {
-      cuts,
-      grandTotalTools,
-      totalKnives,
-      stripTotal,
-      bottomArborUsed,
-      topArborUsed,
-      orderNumber: config.orderNumber,
-      companyName: config.companyName,
-      coilWidth,
-      coilWeight: config.coilWeight,
-      gauge: config.gauge,
-      edgeTrim: coilWidth - stripTotal,
-      clearance,
-      bottomOpening: solvedShoulders.bottomOpening,
-      topOpening: solvedShoulders.topOpening,
-      bottomClosing: solvedShoulders.bottomClosing,
-      topClosing: solvedShoulders.topClosing,
-      shouldersValid: shoulders.isValid,
-    }
-  };
+  return ok({
+    cuts,
+    grandTotalTools,
+    totalKnives,
+    stripTotal,
+    bottomArborUsed,
+    topArborUsed,
+    orderNumber: config.orderNumber,
+    companyName: config.companyName,
+    coilWidth,
+    coilWeight: config.coilWeight,
+    gauge: config.gauge,
+    edgeTrim: coilWidth - stripTotal,
+    clearance,
+    bottomOpening: solvedShoulders.bottomOpening,
+    topOpening: solvedShoulders.topOpening,
+    bottomClosing: solvedShoulders.bottomClosing,
+    topClosing: solvedShoulders.topClosing,
+    shouldersValid: shoulders.isValid,
+  });
 }
 
 /**
@@ -208,13 +212,13 @@ export function calculateFullSetup(
   inputs: FullSetupInputs,
   strips: StripEntry[],
   machine: MachineProfile
-): { result: FullSetupResult | null; error: string | null } {
+): Result<FullSetupResult, string> {
   const coilWidth = parseFloat(inputs.coilWidth);
   const knifeSize = parseFloat(inputs.knifeSize);
   const clearance = parseFloat(inputs.clearance);
 
-  if (isNaN(coilWidth) || coilWidth <= 0) return { result: null, error: "Please enter a valid coil width." };
-  if (coilWidth > machine.arborLength) return { result: null, error: `Coil width (${coilWidth}") exceeds arbor length (${machine.arborLength}").` };
+  if (isNaN(coilWidth) || coilWidth <= 0) return err("Please enter a valid coil width.");
+  if (coilWidth > machine.arborLength) return err(`Coil width (${coilWidth}") exceeds arbor length (${machine.arborLength}").`);
 
   const parsedStrips: ValidatedStrip[] = [];
   for (const stripEntry of strips) {
@@ -223,10 +227,10 @@ export function calculateFullSetup(
     const minus = parseFloat(stripEntry.minusTol) || 0;
     const plus = parseFloat(stripEntry.plusTol) || 0;
     
-    if (isNaN(width) || width <= 0) return { result: null, error: "Each strip width must be greater than 0." };
-    if (isNaN(quantity) || quantity < 1) return { result: null, error: "Each strip quantity must be at least 1." };
+    if (isNaN(width) || width <= 0) return err("Each strip width must be greater than 0.");
+    if (isNaN(quantity) || quantity < 1) return err("Each strip quantity must be at least 1.");
     if (plus > 0.500 || minus > 0.500) {
-      return { result: null, error: `Strip ${width.toFixed(3)}": tolerance is too large (Max 0.500).` };
+      return err(`Strip ${width.toFixed(3)}": tolerance is too large (Max 0.500).`);
     }
     
     parsedStrips.push({ width, quantity, minus, plus });

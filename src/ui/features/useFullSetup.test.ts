@@ -21,15 +21,18 @@ describe('calculateFullSetup', () => {
       { id: '1', width: '5.000', quantity: '3', minusTol: '0.000', plusTol: '0.000' }
     ];
 
-    const { result, error } = calculateFullSetup(baseInputs, strips, machine);
+    const res = calculateFullSetup(baseInputs, strips, machine);
 
-    expect(error).toBeNull();
-    expect(result).not.toBeNull();
-    // 3 strips = 3 cuts
-    expect(result!.cuts).toHaveLength(3);
-    expect(result!.cuts[0].width).toBe(5.000);
-    expect(result!.cuts[1].width).toBe(5.000);
-    expect(result!.cuts[2].width).toBe(5.000);
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      const { value: result } = res;
+      expect(result).not.toBeNull();
+      // 3 strips = 3 cuts
+      expect(result.cuts).toHaveLength(3);
+      expect(result.cuts[0].width).toBe(5.000);
+      expect(result.cuts[1].width).toBe(5.000);
+      expect(result.cuts[2].width).toBe(5.000);
+    }
   });
 
   it('alternates between male-bottom and female-bottom types', () => {
@@ -37,11 +40,13 @@ describe('calculateFullSetup', () => {
       { id: '1', width: '5.000', quantity: '3', minusTol: '0.000', plusTol: '0.000' }
     ];
 
-    const { result } = calculateFullSetup(baseInputs, strips, machine);
-
-    expect(result!.cuts[0].type).toBe('male-bottom');
-    expect(result!.cuts[1].type).toBe('female-bottom');
-    expect(result!.cuts[2].type).toBe('male-bottom');
+    const res = calculateFullSetup(baseInputs, strips, machine);
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.value.cuts[0].type).toBe('male-bottom');
+      expect(res.value.cuts[1].type).toBe('female-bottom');
+      expect(res.value.cuts[2].type).toBe('male-bottom');
+    }
   });
 
   it('generates unique cuts for different strip widths', () => {
@@ -50,13 +55,14 @@ describe('calculateFullSetup', () => {
       { id: '2', width: '6.000', quantity: '1', minusTol: '0.000', plusTol: '0.000' }
     ];
 
-    const { result, error } = calculateFullSetup(baseInputs, strips, machine);
+    const res = calculateFullSetup(baseInputs, strips, machine);
 
-    expect(error).toBeNull();
-    expect(result!.cuts).toHaveLength(2);
-
-    expect(result!.cuts[0].width).toBe(4.000);
-    expect(result!.cuts[1].width).toBe(6.000);
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.value.cuts).toHaveLength(2);
+      expect(res.value.cuts[0].width).toBe(4.000);
+      expect(res.value.cuts[1].width).toBe(6.000);
+    }
   });
 
   it('validates that total width + knives fits on arbor', () => {
@@ -67,9 +73,11 @@ describe('calculateFullSetup', () => {
     ];
     // Width 62" + 6 knives (2*2 + 2) * 0.365 = 2.19 = 64.19 (Too big for 64" arbor)
 
-    const { result, error } = calculateFullSetup(crazyInputs, strips, machine);
-    expect(result).toBeNull();
-    expect(error).toContain('exceeds arbor length');
+    const res = calculateFullSetup(crazyInputs, strips, machine);
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error).toContain('exceeds arbor length');
+    }
   });
 
   it('correctly calculates tooling targets for male and female sides', () => {
@@ -79,13 +87,15 @@ describe('calculateFullSetup', () => {
       { id: '1', width: '5.000', quantity: '1', minusTol: '0.000', plusTol: '0.000' }
     ];
 
-    const { result } = calculateFullSetup(baseInputs, strips, machine);
-    const s1 = result!.cuts[0];
-    
-    // Cut 1 is male-bottom
-    expect(s1.type).toBe('male-bottom');
-    expect(s1.bottomStack.target).toBeCloseTo(4.254);
-    expect(s1.topStack.target).toBe(5.000);
+    const res = calculateFullSetup(baseInputs, strips, machine);
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      const s1 = res.value.cuts[0];
+      // Cut 1 is male-bottom
+      expect(s1.type).toBe('male-bottom');
+      expect(s1.bottomStack.target).toBeCloseTo(4.254);
+      expect(s1.topStack.target).toBe(5.000);
+    }
   });
 
   it('calculates physical arbor widths correctly', () => {
@@ -96,8 +106,11 @@ describe('calculateFullSetup', () => {
       { id: '1', width: '5.000', quantity: '1', minusTol: '0.000', plusTol: '0.000' }
     ];
 
-    const { result } = calculateFullSetup(baseInputs, strips, machine);
-    expect(result!.bottomArborUsed).toBeCloseTo(4.984);
-    expect(result!.topArborUsed).toBeCloseTo(5.730);
+    const res = calculateFullSetup(baseInputs, strips, machine);
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.value.bottomArborUsed).toBeCloseTo(4.984);
+      expect(res.value.topArborUsed).toBeCloseTo(5.730);
+    }
   });
 });

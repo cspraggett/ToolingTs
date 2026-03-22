@@ -140,7 +140,7 @@
   * {
     color: black !important;
     background-color: transparent !important;
-    border-color: #ccc !important;
+    border-color: #000 !important;
     box-shadow: none !important;
     text-shadow: none !important;
   }
@@ -150,8 +150,8 @@
   }
 
   /* Ensure card borders show in print */
-  .card, .border {
-    border: 1px solid black !important;
+  .card, .border, [class*="border"] {
+    border: 1pt solid black !important;
   }
 
   /* Tighter spacing for print */

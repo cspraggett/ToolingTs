@@ -27,15 +27,15 @@ interface SetupCardProps {
 
 export function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) {
   return (
-    <Card className="break-inside-avoid border shadow-md overflow-hidden transition-all hover:shadow-lg">
-      <CardHeader className="bg-slate-50 py-3 border-b border-slate-200">
+    <Card className="break-inside-avoid border shadow-md overflow-hidden transition-all hover:shadow-lg print:shadow-none print:border-black print:border-2">
+      <CardHeader className="bg-slate-50 py-3 border-b border-slate-200 print:border-black print:bg-transparent">
         <div className="flex justify-between items-center">
-          <CardTitle className="text-base font-extrabold text-slate-800 tracking-tight">{title}</CardTitle>
+          <CardTitle className="text-base font-extrabold text-slate-800 tracking-tight print:text-black">{title}</CardTitle>
           {extraHeader}
         </div>
       </CardHeader>
-      <CardContent className="p-0 bg-white">
-        <div className="grid grid-cols-2 divide-x divide-slate-100">
+      <CardContent className="p-0 bg-white print:bg-transparent">
+        <div className="grid grid-cols-2 divide-x divide-slate-100 print:divide-black print:divide-x-2">
           <div className="p-4 flex flex-col h-full bg-indigo-50/5">
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">
               {side1.label}

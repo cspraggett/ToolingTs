@@ -131,7 +131,8 @@ export function generateFullSetup(
     bottomClearance,
     topClearance,
     bottomArborUsed,
-    topArborUsed
+    topArborUsed,
+    machine.id
   );
 
   // 5. Solve tooling stacks for shoulders

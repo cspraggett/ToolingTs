@@ -84,6 +84,26 @@ describe('computeShoulders', () => {
     const result = computeShoulders(63, 64, 0.365, 0.008, 0, 62.984, 63.730);
     expect(result.isValid).toBe(false);
   });
+
+  it('applies 2" offset for slitter-4', () => {
+    // Normal calculation:
+    // rawBase = (67 - 20) / 2 = 23.5
+    // base = 23.5
+    // knifeRoundedUp = 0.375
+    // bottomOpening = 23.5 + 0.008 = 23.508
+    // topOpening = 23.5 - 0.375 + 0 = 23.125
+    
+    // Slitter 4:
+    // bottomOpening = 23.508 - 2.0 = 21.508
+    // topOpening = 23.125 - 2.0 = 21.125
+    
+    const result = computeShoulders(20, 67, 0.375, 0.008, 0, 19.984, 20.730, 'slitter-4');
+    expect(result.bottomOpening).toBe(21.508);
+    expect(result.topOpening).toBe(21.125);
+    
+    // Check closing: 67 - 21.508 - 19.984 = 25.508
+    expect(result.bottomClosing).toBe(25.508);
+  });
 });
 
 describe('computeCoilUsage', () => {

@@ -138,72 +138,19 @@
   body {
     background: white !important;
     color: black !important;
-    font-family: "Helvetica", "Arial", sans-serif !important;
-    font-size: 11pt;
-    line-height: 1.2;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  /* Reset all shadcn/tailwind colors for print */
+  /* Ensure background colors and borders print */
   * {
-    color: black !important;
-    background: transparent !important;
-    border-color: black !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    -webkit-print-color-adjust: economy;
-    print-color-adjust: economy;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  .print-page {
-    /* Remove forced page breaks between chunks */
-    display: block;
-    width: 100%;
-  }
-
-  /* Large bold text for operators */
-  .print-header {
-    border-bottom: 2pt solid black;
-    margin-bottom: 8pt;
-  }
-
-  .print-label {
-    font-size: 9pt;
-    font-weight: 900;
-    text-transform: uppercase;
-    color: #333 !important;
-  }
-
-  .print-value {
-    font-size: 14pt;
-    font-weight: 900;
-  }
-
-  .print-card {
-    border: 2pt solid black !important;
-    margin-bottom: 15pt;
+  .page-break-inside-avoid {
     page-break-inside: avoid;
-  }
-
-  .print-card-title {
-    background-color: #eee !important;
-    -webkit-print-color-adjust: exact;
-    border-bottom: 2pt solid black !important;
-    padding: 4pt 8pt;
-    font-size: 14pt;
-    font-weight: 900;
-  }
-
-  .print-stack-item {
-    font-size: 12pt;
-    font-weight: 700;
-    border-bottom: 1pt solid #ccc !important;
-    padding: 3pt 0;
-  }
-
-  .print-target {
-    font-size: 18pt;
-    font-weight: 900;
-    text-align: center;
-    padding-top: 5pt;
+    break-inside: avoid;
   }
 }

@@ -53,7 +53,8 @@ export function computeShoulders(
   bottomClearance: number,
   topClearance: number,
   bottomArborUsed: number,
-  topArborUsed: number
+  topArborUsed: number,
+  machineId?: string
 ) {
   // 1. Center the entire layout on the arbor in 1/8" increments for physical simplicity.
   const rawBaseShoulder = (arborLength - stripTotal) / 2;
@@ -63,8 +64,14 @@ export function computeShoulders(
   const knifeRoundedUp = Math.ceil(knifeSize / 0.125) * 0.125;
 
   // 3. Apply clearance offsets
-  const bottomOpening = roundToTenThousandth(baseShoulder + bottomClearance);
-  const topOpening = roundToTenThousandth(baseShoulder - knifeRoundedUp + topClearance);
+  let bottomOpening = roundToTenThousandth(baseShoulder + bottomClearance);
+  let topOpening = roundToTenThousandth(baseShoulder - knifeRoundedUp + topClearance);
+
+  // Slitter 4 Specific Offset: Subtract 2" from opening, add 2" to closing
+  if (machineId === 'slitter-4') {
+    bottomOpening = roundToTenThousandth(bottomOpening - 2.0);
+    topOpening = roundToTenThousandth(topOpening - 2.0);
+  }
   
   const bottomClosing = roundToTenThousandth(arborLength - bottomOpening - bottomArborUsed);
   const topClosing = roundToTenThousandth(arborLength - topOpening - topArborUsed);

@@ -10,9 +10,9 @@ function PrintStack({ summary }: { summary: ToolSummary[] }) {
   return (
     <div className="flex flex-col">
       {summary.map((s, i) => (
-        <div key={i} className="print-stack-item flex justify-between">
-          <span className="font-bold tabular-nums">{s.count} x</span>
-          <span className="font-black tabular-nums">{formatInches(s.size)}"{s.label ? ` [${s.label}]` : ""}</span>
+        <div key={i} className="print-stack-item flex justify-between py-0.5 border-b border-black/10 last:border-0 text-sm font-bold">
+          <span className="tabular-nums">{s.count} x</span>
+          <span className="tabular-nums">{formatInches(s.size)}"{s.label ? ` [${s.label}]` : ""}</span>
         </div>
       ))}
     </div>
@@ -25,26 +25,24 @@ function PrintSetupCard({ title, side1, side2 }: {
   side2: { label: string; target: number; summary: ToolSummary[]; isFemale?: boolean };
 }) {
   return (
-    <div className="print-card w-full">
-      <div className="print-card-title uppercase tracking-tighter">{title}</div>
-      <div className="flex divide-x-2 divide-black">
-        <div className="w-1/2 p-4 flex flex-col h-full">
-          <div className="print-label mb-2 border-b border-black/10 pb-1">{side1.label}</div>
+    <div className="print-card w-full mb-2">
+      <div className="print-card-title uppercase tracking-tighter py-1 px-2 text-xs bg-slate-100 border-b border-black font-black">{title}</div>
+      <div className="flex divide-x divide-black">
+        <div className="w-1/2 p-2 flex flex-col h-full">
+          <div className="text-[9px] font-black uppercase mb-1">{side1.label}</div>
           <div className="flex-grow">
             <PrintStack summary={side1.summary} />
           </div>
-          <div className={`print-target mt-4 border-t-2 border-black pt-3 ${side1.isFemale ? "bg-slate-100" : ""}`}>
-            <span className="text-[10px] block font-black leading-none opacity-50 mb-1">TARGET</span>
+          <div className={`mt-2 border-t border-black pt-1 text-center font-black text-base ${side1.isFemale ? "bg-slate-50" : ""}`}>
             {formatInches(side1.target)}"
           </div>
         </div>
-        <div className="w-1/2 p-4 flex flex-col h-full">
-          <div className="print-label mb-2 border-b border-black/10 pb-1">{side2.label}</div>
+        <div className="w-1/2 p-2 flex flex-col h-full">
+          <div className="text-[9px] font-black uppercase mb-1">{side2.label}</div>
           <div className="flex-grow">
             <PrintStack summary={side2.summary} />
           </div>
-          <div className={`print-target mt-4 border-t-2 border-black pt-3 ${side2.isFemale ? "bg-slate-100" : ""}`}>
-            <span className="text-[10px] block font-black leading-none opacity-50 mb-1">TARGET</span>
+          <div className={`mt-2 border-t border-black pt-1 text-center font-black text-base ${side2.isFemale ? "bg-slate-50" : ""}`}>
             {formatInches(side2.target)}"
           </div>
         </div>
@@ -56,67 +54,55 @@ function PrintSetupCard({ title, side1, side2 }: {
 export function PrintView({ result, viewMode }: PrintViewProps) {
   const cutsToDisplay = viewMode === 'short' ? result.groupedCuts : result.cuts;
   
-  // Strictly group cuts into batches of 3
+  // Group into 4 per page for compactness
   const cutChunks: any[][] = [];
-  for (let i = 0; i < cutsToDisplay.length; i += 3) {
-    cutChunks.push(cutsToDisplay.slice(i, i + 3));
+  for (let i = 0; i < cutsToDisplay.length; i += 4) {
+    cutChunks.push(cutsToDisplay.slice(i, i + 4));
   }
 
   return (
-    <div className="hidden print-only w-full">
-      {/* PAGE 1: Header + Opening Shoulders + First Chunk of 3 */}
-      <div className="print-page">
-        <div className="print-header flex justify-between items-end pb-2 mb-6">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-black tracking-[0.3em] text-slate-500 leading-none mb-1">MASTER PRODUCTION</span>
-            <span className="text-3xl font-black tracking-tighter">SLITTER SETUP SHEET</span>
+    <div className="hidden print-only w-full text-[10pt]">
+      {/* PAGE 1: Header + Opening Shoulders + First Chunk */}
+      <div className="print-page pb-4">
+        <div className="flex justify-between items-center border-b-2 border-black mb-4 pb-1">
+          <h1 className="text-xl font-black tracking-tighter uppercase">Slitter Setup Sheet</h1>
+          <span className="text-[10px] font-bold">DATE: {new Date().toLocaleDateString()}</span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mb-4 p-2 border border-black rounded-sm bg-slate-50/30 text-[9pt]">
+          <div>
+            <div className="text-[8px] font-black uppercase text-slate-500 leading-none mb-0.5 tracking-tighter">Job Information</div>
+            <div className="font-black">ORD: {result.orderNumber || "---"} | {result.companyName || "---"}</div>
           </div>
-          <div className="text-right flex flex-col items-end">
-            <span className="text-[10px] font-black tracking-widest text-slate-500 leading-none mb-1">DATE GENERATED</span>
-            <span className="text-sm font-black">{new Date().toLocaleDateString()}</span>
+          <div className="border-x border-black/10 px-4">
+            <div className="text-[8px] font-black uppercase text-slate-500 leading-none mb-0.5 tracking-tighter">Material Info</div>
+            <div className="font-black">{formatInches(result.coilWidth)}" @ {result.gauge ? `${formatInches(parseFloat(result.gauge))}"` : "---"}</div>
+          </div>
+          <div className="pl-2">
+            <div className="text-[8px] font-black uppercase text-slate-500 leading-none mb-0.5 tracking-tighter">Setup Targets</div>
+            <div className="font-bold">CLR: {formatInches(result.clearance)}" | TRIM: {formatInches(result.edgeTrim)}"</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6 mb-8 p-4 border-2 border-black rounded-sm bg-slate-50/50">
-          <div className="border-r border-black/20 pr-4">
-            <div className="print-label mb-1">Job Details</div>
-            <div className="font-black text-xl leading-tight">ORD: {result.orderNumber || "---"}</div>
-            <div className="font-bold text-xs uppercase opacity-70">CO: {result.companyName || "---"}</div>
-          </div>
-          <div className="border-r border-black/20 px-4">
-            <div className="print-label mb-1">Material Info</div>
-            <div className="font-black text-xl leading-tight">WIDTH: {formatInches(result.coilWidth)}"</div>
-            <div className="font-bold text-xs uppercase opacity-70">GAUGE: {result.gauge ? `${formatInches(parseFloat(result.gauge))}"` : "---"}</div>
-          </div>
-          <div className="pl-4">
-            <div className="print-label mb-1">Constants</div>
-            <div className="font-bold text-sm">CLEARANCE: {formatInches(result.clearance)}"</div>
-            <div className="font-bold text-sm">EDGE TRIM: {formatInches(result.edgeTrim)}"</div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
+        <div className="space-y-2">
           <PrintSetupCard
             title="OPENING SHOULDERS"
             side1={{ label: "Bottom", target: result.bottomOpening.target, summary: result.bottomOpeningSummary }}
             side2={{ label: "Top", target: result.topOpening.target, summary: result.topOpeningSummary }}
           />
 
-          {/* First 3 Cuts */}
           {cutChunks[0]?.map((item, i) => {
             const isGrouped = 'count' in item;
-            const key = isGrouped ? `p1-g-${i}` : `p1-c-${(item as ArborCut).cutIndex}`;
+            const data = isGrouped ? (item as GroupedArborCut).cut : (item as ArborCut);
             const title = isGrouped 
               ? (item as GroupedArborCut).count > 1 
-                ? `CUTS ${(item as GroupedArborCut).startIdx}–${(item as GroupedArborCut).endIdx} (${formatInches((item as GroupedArborCut).cut.width)}" x ${(item as GroupedArborCut).count})`
-                : `CUT ${(item as GroupedArborCut).startIdx} (${formatInches((item as GroupedArborCut).cut.width)}")`
-              : `CUT ${(item as ArborCut).cutIndex} (${formatInches((item as ArborCut).width)}")`;
-            
-            const data = isGrouped ? (item as GroupedArborCut).cut : (item as ArborCut);
+                ? `CUTS ${(item as GroupedArborCut).startIdx}–${(item as GroupedArborCut).endIdx} (${formatInches(data.width)}" x ${(item as GroupedArborCut).count})`
+                : `CUT ${(item as GroupedArborCut).startIdx} (${formatInches(data.width)}")`
+              : `CUT ${data.cutIndex} (${formatInches(data.width)}")`;
 
             return (
               <PrintSetupCard
-                key={key}
+                key={`p1-${i}`}
                 title={title}
                 side1={{ label: "Bottom", target: data.bottomStack.target, summary: data.bottomSummary, isFemale: data.type === 'female-bottom' }}
                 side2={{ label: "Top", target: data.topStack.target, summary: data.topSummary, isFemale: data.type === 'male-bottom' }}
@@ -126,28 +112,25 @@ export function PrintView({ result, viewMode }: PrintViewProps) {
         </div>
       </div>
 
-      {/* SUBSEQUENT PAGES: 3 Cuts per page */}
+      {/* SUBSEQUENT PAGES */}
       {cutChunks.slice(1).map((chunk, chunkIdx) => (
-        <div key={`page-${chunkIdx + 2}`} className="print-page">
-          <div className="print-header text-sm py-2 mb-8 opacity-50 border-b-2 border-black flex justify-between">
-            <span>ORD: {result.orderNumber} | CO: {result.companyName}</span>
-            <span>PAGE {chunkIdx + 2}</span>
+        <div key={`page-${chunkIdx + 2}`} className="print-page pb-4 pt-2">
+          <div className="text-[9px] font-black border-b border-black mb-4 flex justify-between uppercase">
+            <span>ORD: {result.orderNumber} | Page {chunkIdx + 2}</span>
           </div>
-          <div className="space-y-8">
+          <div className="space-y-2">
             {chunk.map((item, i) => {
               const isGrouped = 'count' in item;
-              const key = isGrouped ? `p${chunkIdx + 2}-g-${i}` : `p${chunkIdx + 2}-c-${(item as ArborCut).cutIndex}`;
+              const data = isGrouped ? (item as GroupedArborCut).cut : (item as ArborCut);
               const title = isGrouped 
                 ? (item as GroupedArborCut).count > 1 
-                  ? `CUTS ${(item as GroupedArborCut).startIdx}–${(item as GroupedArborCut).endIdx} (${formatInches((item as GroupedArborCut).cut.width)}" x ${(item as GroupedArborCut).count})`
-                  : `CUT ${(item as GroupedArborCut).startIdx} (${formatInches((item as GroupedArborCut).cut.width)}")`
-                : `CUT ${(item as ArborCut).cutIndex} (${formatInches((item as ArborCut).width)}")`;
-              
-              const data = isGrouped ? (item as GroupedArborCut).cut : (item as ArborCut);
+                  ? `CUTS ${(item as GroupedArborCut).startIdx}–${(item as GroupedArborCut).endIdx} (${formatInches(data.width)}" x ${(item as GroupedArborCut).count})`
+                  : `CUT ${(item as GroupedArborCut).startIdx} (${formatInches(data.width)}")`
+                : `CUT ${data.cutIndex} (${formatInches(data.width)}")`;
 
               return (
                 <PrintSetupCard
-                  key={key}
+                  key={`p${chunkIdx + 2}-${i}`}
                   title={title}
                   side1={{ label: "Bottom", target: data.bottomStack.target, summary: data.bottomSummary, isFemale: data.type === 'female-bottom' }}
                   side2={{ label: "Top", target: data.topStack.target, summary: data.topSummary, isFemale: data.type === 'male-bottom' }}
@@ -158,35 +141,27 @@ export function PrintView({ result, viewMode }: PrintViewProps) {
         </div>
       ))}
 
-      {/* FINAL PAGE: Closing Shoulders + Totals summary */}
-      <div className="print-page">
-        <div className="print-header text-sm py-2 mb-8 opacity-50 border-b-2 border-black flex justify-between font-black">
-          <span>CLOSING SUMMARY</span>
-          <span>ORD: {result.orderNumber}</span>
-        </div>
-        
-        <div className="space-y-12">
-          <PrintSetupCard
-            title="CLOSING SHOULDERS"
-            side1={{ label: "Bottom", target: result.bottomClosing.target, summary: result.bottomClosingSummary }}
-            side2={{ label: "Top", target: result.topClosing.target, summary: result.topClosingSummary }}
-          />
-
-          <div className="border-t-8 border-black pt-8 grid grid-cols-2 gap-12">
-            <div>
-              <div className="print-label text-xs mb-2">Final Tooling Counts</div>
-              <div className="text-3xl font-black tracking-tighter">TOOLS: {result.grandTotalTools}</div>
-              <div className="text-3xl font-black tracking-tighter">KNIVES: {result.totalKnives}</div>
-            </div>
-            <div className="text-right">
-              <div className="print-label text-xs mb-2">Total Arbor Space Occupied</div>
-              <div className="text-2xl font-black tracking-tighter">BOTTOM: {formatInches(result.bottomArborUsed)}"</div>
-              <div className="text-2xl font-black tracking-tighter">TOP: {formatInches(result.topArborUsed)}"</div>
-            </div>
+      {/* FINAL PAGE SUMMARY */}
+      <div className="print-page pt-2 mt-4 border-t-2 border-black">
+        <div className="flex justify-between items-start">
+          <div className="space-y-4 w-2/3 pr-8">
+            <PrintSetupCard
+              title="CLOSING SHOULDERS"
+              side1={{ label: "Bottom", target: result.bottomClosing.target, summary: result.bottomClosingSummary }}
+              side2={{ label: "Top", target: result.topClosing.target, summary: result.topClosingSummary }}
+            />
           </div>
-          
-          <div className="mt-24 border-2 border-dashed border-black/20 p-8 rounded-lg text-center">
-            <span className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-300">End of Setup Sheet</span>
+          <div className="w-1/3 border-l-2 border-black pl-6 space-y-4">
+            <div>
+              <div className="text-[8px] font-black uppercase text-slate-500 tracking-tighter">Total Tooling</div>
+              <div className="text-base font-black">TOOLS: {result.grandTotalTools}</div>
+              <div className="text-base font-black">KNIVES: {result.totalKnives}</div>
+            </div>
+            <div>
+              <div className="text-[8px] font-black uppercase text-slate-500 tracking-tighter">Arbor Space</div>
+              <div className="text-sm font-bold tabular-nums">B: {formatInches(result.bottomArborUsed)}"</div>
+              <div className="text-sm font-bold tabular-nums">T: {formatInches(result.topArborUsed)}"</div>
+            </div>
           </div>
         </div>
       </div>

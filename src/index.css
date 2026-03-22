@@ -123,7 +123,7 @@
 
 @media print {
   @page {
-    margin: 0.4in;
+    margin: 0.25in;
     size: portrait;
   }
   

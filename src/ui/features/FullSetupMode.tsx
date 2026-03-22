@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MACHINES } from "../../config/machine-profiles";
-import { ToolSummary } from "../../core/utils";
+import { ToolSummary, formatInches } from "../../core/utils";
 import { GroupedArborCut } from "../../core/engine";
 import styles from "../styles.module.css";
 import { useFullSetup } from "./useFullSetup";
@@ -10,7 +10,7 @@ function StackList({ summary }: { summary: ToolSummary[] }) {
     <div className={styles.stackList}>
       {summary.map((s, i) => (
         <div key={i} className={styles.stackLine}>
-          {s.count} x {s.size.toFixed(3)}"
+          {s.count} x {formatInches(s.size)}"
         </div>
       ))}
     </div>
@@ -39,7 +39,7 @@ function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) {
           <StackList summary={side1.summary} />
           <div className={styles.targetSize}>
             <span className={side1.isFemale ? styles.femaleTargetBox : ""}>
-              {side1.target.toFixed(3)}"
+              {formatInches(side1.target)}"
             </span>
           </div>
         </div>
@@ -50,7 +50,7 @@ function SetupCard({ title, side1, side2, extraHeader }: SetupCardProps) {
           <StackList summary={side2.summary} />
           <div className={styles.targetSize}>
             <span className={side2.isFemale ? styles.femaleTargetBox : ""}>
-              {side2.target.toFixed(3)}"
+              {formatInches(side2.target)}"
             </span>
           </div>
         </div>
@@ -155,7 +155,7 @@ export function FullSetupMode() {
             >
               {setup.currentMachine.knives.map((k) => (
                 <option key={k} value={k}>
-                  {k.toFixed(3)}"
+                  {formatInches(k)}"
                 </option>
               ))}
             </select>
@@ -334,27 +334,27 @@ export function FullSetupMode() {
               </p>
             )}
             <p className={styles.recCount}>
-              Coil Width: <strong>{setup.result.coilWidth.toFixed(3)}"</strong>
+              Coil Width: <strong>{formatInches(setup.result.coilWidth)}"</strong>
               {setup.result.coilWeight && (
                 <> | Weight: <strong>{setup.result.coilWeight} lbs</strong></>
               )}
               {setup.result.gauge && (
-                <> | Gauge: <strong>{parseFloat(setup.result.gauge).toFixed(3)}"</strong></>
+                <> | Gauge: <strong>{formatInches(parseFloat(setup.result.gauge))}"</strong></>
               )}
-              {" | "} Clearance: <strong>{setup.result.clearance.toFixed(3)}"</strong>
+              {" | "} Clearance: <strong>{formatInches(setup.result.clearance)}"</strong>
             </p>
             <p className={styles.recCount}>
-              Edge Trim: <strong>{setup.result.edgeTrim.toFixed(3)}"</strong>
+              Edge Trim: <strong>{formatInches(setup.result.edgeTrim)}"</strong>
               {" | "}
-              Setup Width: <strong>{setup.result.stripTotal.toFixed(3)}"</strong>
+              Setup Width: <strong>{formatInches(setup.result.stripTotal)}"</strong>
               {!setup.result.shouldersValid && (
                 <span style={{ color: "red" }}> (Shoulders below 1"!)</span>
               )}
             </p>
             <p className={styles.recCount}>
-              Bottom Arbor: <strong>{setup.result.bottomArborUsed.toFixed(3)}"</strong>
+              Bottom Arbor: <strong>{formatInches(setup.result.bottomArborUsed)}"</strong>
               {" | "}
-              Top Arbor: <strong>{setup.result.topArborUsed.toFixed(3)}"</strong>
+              Top Arbor: <strong>{formatInches(setup.result.topArborUsed)}"</strong>
             </p>
             <p className={styles.recCount} style={{ marginTop: "0.5rem", borderTop: "1px solid #ddd", paddingTop: "0.5rem" }}>
               Total: {setup.result.grandTotalTools} tools | {setup.result.totalKnives} knives
@@ -375,8 +375,8 @@ export function FullSetupMode() {
               <SetupCard
                 key={`group-${i}`}
                 title={group.count > 1 
-                  ? `${group.cut.width.toFixed(3)}" x ${group.count} (Cuts ${group.startIdx}–${group.endIdx})`
-                  : `Cut ${group.startIdx}: ${group.cut.width.toFixed(3)}"`
+                  ? `${formatInches(group.cut.width)}" x ${group.count} (Cuts ${group.startIdx}–${group.endIdx})`
+                  : `Cut ${group.startIdx}: ${formatInches(group.cut.width)}"`
                 }
                 side1={{
                   label: "Bottom",
@@ -397,7 +397,7 @@ export function FullSetupMode() {
             setup.result.cuts.map((s, i) => (
               <SetupCard
                 key={`cut-${s.cutIndex}-${i}`}
-                title={`Cut ${s.cutIndex}: ${s.width.toFixed(3)}"`}
+                title={`Cut ${s.cutIndex}: ${formatInches(s.width)}"`}
                 side1={{
                   label: s.type === 'male-bottom' ? "Bottom (Male)" : "Bottom (Female)",
                   target: s.bottomStack.target,

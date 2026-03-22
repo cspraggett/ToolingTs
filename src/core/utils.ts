@@ -28,6 +28,14 @@ export const inchesToUnits = (inches: number, precision: number = DEFAULT_UNITS_
 export const unitsToInches = (units: number, precision: number = DEFAULT_UNITS_PER_INCH) => 
   units / precision;
 
+/**
+ * Formats a numerical inch value for display.
+ * Uses 4 decimal places if it has a half-thou, otherwise 3.
+ */
+export const formatInches = (val: number) => {
+  return hasHalfThou(val) ? val.toFixed(4) : val.toFixed(3);
+};
+
 export interface ToolSummary {
   size: number;
   count: number;

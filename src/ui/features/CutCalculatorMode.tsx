@@ -1,5 +1,6 @@
 import { MACHINES } from "../../config/machine-profiles";
 import { ResultDisplay } from "../components/ResultDisplay";
+import { formatInches } from "../../core/utils";
 import styles from "../styles.module.css";
 import { useCutCalculator } from "./useCutCalculator";
 
@@ -45,7 +46,7 @@ export function CutCalculatorMode() {
             >
               {cut.currentMachine.knives.map((k) => (
                 <option key={k} value={k}>
-                  {k.toFixed(3)}"
+                  {formatInches(k)}"
                 </option>
               ))}
             </select>
@@ -104,20 +105,20 @@ export function CutCalculatorMode() {
         <div className={styles.resultsArea}>
           <div className={styles.recommendationBox}>
             <p className={styles.recTitle}>Optimization Found:</p>
-            <p className={styles.recValue}>{cut.result.offset > 0 ? "+" : ""}{cut.result.offset.toFixed(3)}"</p>
+            <p className={styles.recValue}>{cut.result.offset > 0 ? "+" : ""}{formatInches(cut.result.offset)}"</p>
             <p className={styles.recCount}>Total Tools: <strong>{cut.result.totalToolCount}</strong></p>
           </div>
           <div className={styles.sectionBlock}>
             <h3 className={styles.sectionHeader}>Male Setup</h3>
             <div className={styles.targetInfo}>
-              Target: <strong>{(cut.calculatedTargets.male + cut.result.offset).toFixed(3)}"</strong>
+              Target: <strong>{formatInches(cut.calculatedTargets.male + cut.result.offset)}"</strong>
             </div>
             <ResultDisplay result={cut.result.maleResult} />
           </div>
           <div>
             <h3 className={styles.sectionHeader}>Female Setup</h3>
             <div className={styles.targetInfo}>
-              Target: <strong>{(cut.calculatedTargets.female + cut.result.offset).toFixed(3)}"</strong>
+              Target: <strong>{formatInches(cut.calculatedTargets.female + cut.result.offset)}"</strong>
             </div>
             <ResultDisplay result={cut.result.femaleResult} />
           </div>

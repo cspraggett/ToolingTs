@@ -1,4 +1,4 @@
-import { summarizeStack } from "../../core/utils";
+import { summarizeStack, formatInches } from "../../core/utils";
 import { SolverResult } from "../../core/solver";
 import styles from "../styles.module.css";
 
@@ -14,7 +14,7 @@ export function ResultDisplay({ result }: ResultDisplayProps) {
       {summary.map((item) => (
         <li key={item.size} className={styles.listItem}>
           <span className={styles.listItemSize}>
-            {item.size.toFixed(3)}"
+            {formatInches(item.size)}"
           </span>
           <span className={styles.listItemCount}>
             x {item.count}

@@ -9,7 +9,12 @@ import {
   ToolSummary,
   Result,
   ok,
-  err
+  err,
+  DEFAULT_UNITS_PER_INCH,
+  HALF_THOU_UNITS_PER_INCH,
+  hasHalfThou,
+  inchesToUnits,
+  unitsToInches
 } from "./utils";
 
 // --- Input Types (Strings from UI) ---
@@ -165,7 +170,19 @@ export function generateFullSetup(
 
   for (const strip of strips) {
     const nominalFemale = strip.width;
-    const nominalMale = strip.width - knifeSize * 2 - clearance * 2;
+    
+    // Determine precision for this strip to avoid floating point drift
+    let precision = DEFAULT_UNITS_PER_INCH;
+    if (hasHalfThou(nominalFemale) || hasHalfThou(clearance) || machine.tools.some(t => hasHalfThou(t))) {
+      precision = HALF_THOU_UNITS_PER_INCH;
+    }
+
+    const femaleUnits = inchesToUnits(nominalFemale, precision);
+    const knifeUnits = inchesToUnits(knifeSize, precision);
+    const clearanceUnits = inchesToUnits(clearance, precision);
+    
+    const maleUnits = femaleUnits - (knifeUnits * 2) - (clearanceUnits * 2);
+    const nominalMale = unitsToInches(maleUnits, precision);
 
     if (nominalMale <= 0) {
       return err(`Strip ${strip.width.toFixed(3)}": knives + clearance exceed the strip width.`);
@@ -176,6 +193,7 @@ export function generateFullSetup(
       nominalFemale,
       { minus: strip.minus, plus: strip.plus },
       machine,
+      clearance,
       { strictMode: isStrictCapable && strictMode }
     );
 

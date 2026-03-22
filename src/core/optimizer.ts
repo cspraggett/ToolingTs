@@ -30,16 +30,18 @@ export function findBestDualSetup(
   femaleTarget: number,
   tolerance: ToleranceWindow,
   machine: MachineProfile,
+  clearance: number = 0,
   options: SolverOptions = {}
 ): DualOptimizationResult | null {
 
-  // 1. Determine precision: Default 1000, or 2000 if target or tolerance or tool has a half-thou component.
+  // 1. Determine precision: Default 1000, or 2000 if any input has a half-thou component.
   let precision = DEFAULT_UNITS_PER_INCH;
   if (
     hasHalfThou(maleTarget) || 
     hasHalfThou(femaleTarget) || 
     hasHalfThou(tolerance.minus) || 
     hasHalfThou(tolerance.plus) ||
+    hasHalfThou(clearance) ||
     machine.tools.some(t => hasHalfThou(t))
   ) {
     precision = HALF_THOU_UNITS_PER_INCH;
@@ -63,6 +65,7 @@ export function findBestDualSetup(
     // Find tooling stacks for both targets at this specific offset.
     const maleSolution = findToolingSetup(candidateMaleTarget, machine, options);
     const femaleSolution = findToolingSetup(candidateFemaleTarget, machine, options);
+
 
     if (!maleSolution || !femaleSolution) continue;
 

@@ -18,7 +18,8 @@ describe('Dual Setup Optimizer (Pure)', () => {
       1.503,
       2.503,
       { minus: 0.005, plus: 0.005 },
-      machine
+      machine,
+      0.008
     );
 
     expect(result).not.toBeNull();
@@ -36,6 +37,7 @@ describe('Dual Setup Optimizer (Pure)', () => {
       2.031,
       { minus: 0.000, plus: 0.005 },
       machine,
+      0.008,
       { strictMode: true }
     );
 

@@ -237,7 +237,10 @@ export function generateFullSetup(
 
   const solvedShoulders: Record<string, SolverResult> = {};
   for (const target of shoulderTargets) {
-    const solution = findToolingSetup(target.value, machine, { strictMode: target.strict });
+    const solution = findToolingSetup(target.value, machine, { 
+      strictMode: target.strict,
+      skipClearanceFilter: true
+    });
     if (!solution) return err(`No tooling solution for ${target.key} shoulder (${target.value.toFixed(3)}").`);
     solvedShoulders[target.key] = solution;
   }

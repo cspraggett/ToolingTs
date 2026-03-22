@@ -13,6 +13,7 @@ export interface Tool {
 
 export interface SolverOptions {
   strictMode?: boolean;
+  skipClearanceFilter?: boolean;
 }
 
 export interface SolverResult {
@@ -20,7 +21,12 @@ export interface SolverResult {
   stack: Tool[];
 }
 
-const getActiveTools = (profile: MachineProfile, isStrict: boolean, precision: number): Tool[] => {
+const getActiveTools = (
+  profile: MachineProfile, 
+  isStrict: boolean, 
+  precision: number, 
+  skipClearanceFilter: boolean = false
+): Tool[] => {
   let tools = profile.tools;
 
   // 1. Filter Strict Mode
@@ -31,7 +37,7 @@ const getActiveTools = (profile: MachineProfile, isStrict: boolean, precision: n
 
   // 2. Filter Clearance-Only Tools
   const clearanceList = profile.clearanceOnly;
-  if (clearanceList?.length) {
+  if (clearanceList?.length && !skipClearanceFilter) {
     tools = tools.filter(size => !clearanceList.includes(size));
   }
 
@@ -107,7 +113,7 @@ export function findToolingSetup(
   }
 
   const targetUnits = inchesToUnits(targetInches, precision);
-  const activeTools = getActiveTools(machine, !!options.strictMode, precision);
+  const activeTools = getActiveTools(machine, !!options.strictMode, precision, !!options.skipClearanceFilter);
 
   // We use Greedy logic for widths larger than this buffer (6 inches).
   const GREEDY_THRESHOLD_UNITS = 6.0 * precision; 

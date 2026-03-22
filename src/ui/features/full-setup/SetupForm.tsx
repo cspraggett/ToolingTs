@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { MACHINES } from "../../../config/machine-profiles";
 import { formatInches } from "../../../core/utils";
 import styles from "../../styles.module.css";

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { formatInches } from "../../../core/utils";
 import { GroupedArborCut, FullSetupResult } from "../../../core/engine";
 import styles from "../../styles.module.css";

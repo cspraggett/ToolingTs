@@ -89,7 +89,7 @@ describe('computeShoulders', () => {
 describe('computeCoilUsage', () => {
   it('uses 2N+2 knife count', () => {
     const result = computeCoilUsage(
-      [{ width: 5, quantity: 3 }],
+      [{ width: 5, quantity: 3, minus: 0, plus: 0 }],
       0.365,
     );
     expect(result.totalStrips).toBe(3);

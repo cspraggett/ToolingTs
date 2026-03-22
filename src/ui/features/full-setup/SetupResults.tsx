@@ -10,17 +10,6 @@ interface SetupResultsProps {
   result: FullSetupResult;
 }
 
-/**
- * Helper to split an array into chunks of a specific size.
- */
-function chunkArray<T>(array: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
-
 export function SetupResults({ result }: SetupResultsProps) {
   const [viewMode, setViewMode] = useState<'short' | 'long'>('short');
 

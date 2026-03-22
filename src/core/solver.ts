@@ -1,5 +1,10 @@
 import { MachineProfile } from '../config/machine-profiles';
-import { inchesToUnits } from './utils';
+import { 
+  inchesToUnits, 
+  hasHalfThou, 
+  DEFAULT_UNITS_PER_INCH, 
+  HALF_THOU_UNITS_PER_INCH 
+} from './utils';
 
 export interface Tool {
   size: number;
@@ -15,7 +20,7 @@ export interface SolverResult {
   stack: Tool[];
 }
 
-const getActiveTools = (profile: MachineProfile, isStrict: boolean): Tool[] => {
+const getActiveTools = (profile: MachineProfile, isStrict: boolean, precision: number): Tool[] => {
   let tools = profile.tools;
 
   // 1. Filter Strict Mode
@@ -32,7 +37,7 @@ const getActiveTools = (profile: MachineProfile, isStrict: boolean): Tool[] => {
 
   // 3. Map & Sort (Largest to Smallest)
   return tools
-    .map(size => ({ size, units: inchesToUnits(size) }))
+    .map(size => ({ size, units: inchesToUnits(size, precision) }))
     .sort((a, b) => b.units - a.units);
 };
 
@@ -86,7 +91,7 @@ const solveOptimalStack = (targetUnits: number, inventory: Tool[]): Tool[] | nul
 /**
  * Finds the tooling setup for a target width.
  * For performance, it uses a 'Greedy' approach for the bulk of the width 
- * and DP for the remaining small fraction (the SAFE_BUFFER).
+ * and DP for the remaining small fraction.
  */
 export function findToolingSetup(
   targetInches: number,
@@ -95,11 +100,17 @@ export function findToolingSetup(
 ): SolverResult | null {
   if (targetInches <= 0) return null;
 
-  const targetUnits = inchesToUnits(targetInches);
-  const activeTools = getActiveTools(machine, !!options.strictMode);
+  // 1. Determine precision: Default 1000, or 2000 if target or any tool has a half-thou component.
+  let precision = DEFAULT_UNITS_PER_INCH;
+  if (hasHalfThou(targetInches) || machine.tools.some(t => hasHalfThou(t))) {
+    precision = HALF_THOU_UNITS_PER_INCH;
+  }
 
-  // We use Greedy logic for widths larger than this buffer.
-  const GREEDY_THRESHOLD_UNITS = 6000; 
+  const targetUnits = inchesToUnits(targetInches, precision);
+  const activeTools = getActiveTools(machine, !!options.strictMode, precision);
+
+  // We use Greedy logic for widths larger than this buffer (6 inches).
+  const GREEDY_THRESHOLD_UNITS = 6.0 * precision; 
   let unitsToSolveWithGreedy = targetUnits;
   const greedyStack: Tool[] = [];
 

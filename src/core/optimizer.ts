@@ -1,6 +1,12 @@
 import { MachineProfile } from '../config/machine-profiles';
 import { findToolingSetup, SolverResult, SolverOptions } from './solver';
-import { inchesToUnits, unitsToInches } from './utils';
+import { 
+  inchesToUnits, 
+  unitsToInches, 
+  hasHalfThou, 
+  DEFAULT_UNITS_PER_INCH, 
+  HALF_THOU_UNITS_PER_INCH 
+} from './utils';
 
 export interface ToleranceWindow {
   minus: number;
@@ -27,17 +33,29 @@ export function findBestDualSetup(
   options: SolverOptions = {}
 ): DualOptimizationResult | null {
 
-  const minOffsetUnits = inchesToUnits(tolerance.minus);
-  const maxOffsetUnits = inchesToUnits(tolerance.plus);
+  // 1. Determine precision: Default 1000, or 2000 if target or tolerance or tool has a half-thou component.
+  let precision = DEFAULT_UNITS_PER_INCH;
+  if (
+    hasHalfThou(maleTarget) || 
+    hasHalfThou(femaleTarget) || 
+    hasHalfThou(tolerance.minus) || 
+    hasHalfThou(tolerance.plus) ||
+    machine.tools.some(t => hasHalfThou(t))
+  ) {
+    precision = HALF_THOU_UNITS_PER_INCH;
+  }
+
+  const minOffsetUnits = inchesToUnits(tolerance.minus, precision);
+  const maxOffsetUnits = inchesToUnits(tolerance.plus, precision);
 
   // Safety check to prevent excessive calculations.
-  if (minOffsetUnits > 500 || maxOffsetUnits > 500) return null;
+  if (minOffsetUnits + maxOffsetUnits > 1000) return null;
 
   let bestDualResult: DualOptimizationResult | null = null;
 
-  // We iterate through every possible 0.001" increment within the tolerance window.
+  // We iterate through every possible increment within the tolerance window.
   for (let currentOffsetUnits = -minOffsetUnits; currentOffsetUnits <= maxOffsetUnits; currentOffsetUnits++) {
-    const currentOffsetInches = unitsToInches(currentOffsetUnits);
+    const currentOffsetInches = unitsToInches(currentOffsetUnits, precision);
 
     const candidateMaleTarget = maleTarget + currentOffsetInches;
     const candidateFemaleTarget = femaleTarget + currentOffsetInches;

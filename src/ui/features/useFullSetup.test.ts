@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateFullSetup, FullSetupInputs, StripEntry } from './useFullSetup';
+import { calculateFullSetup, FullSetupInputs, StripEntry } from '../../core/engine';
 import { DEFAULT_MACHINE } from '../../config/machine-profiles';
 
 describe('calculateFullSetup', () => {

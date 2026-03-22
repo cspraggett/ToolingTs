@@ -1,7 +1,9 @@
-export interface KnifeClearanceOffset {
+export type ClearanceStrategyType = 'offset' | 'split';
+
+export interface KnifeClearanceStrategy {
   knifeSize: number;
-  bottom: (userClearance: number) => number;
-  top: (userClearance: number) => number;
+  type: ClearanceStrategyType;
+  value: number; // For 'offset', it's added to bottom. For 'split', it's the threshold.
 }
 
 export interface MachineProfile {
@@ -12,7 +14,7 @@ export interface MachineProfile {
   clearanceOnly?: number[];
   strictExclude?: number[];
   arborLength: number; // inches
-  knifeClearanceOffsets: KnifeClearanceOffset[];
+  knifeClearanceStrategies: KnifeClearanceStrategy[];
 }
 
 // === SLITTER 3 (Current Workstation) ===
@@ -29,10 +31,10 @@ export const SLITTER_3: MachineProfile = {
   knives: [0.243, 0.365, 0.480],
   strictExclude: [0.031, 0.062],
   arborLength: 64,
-  knifeClearanceOffsets: [
-    { knifeSize: 0.365, bottom: (clr) => clr, top: () => 0 },
-    { knifeSize: 0.243, bottom: (clr) => clr + 0.003, top: () => 0 },
-    { knifeSize: 0.480, bottom: (clr) => clr <= 0.010 ? 0 : clr - 0.010, top: (clr) => clr <= 0.010 ? 0.010 - clr : 0 },
+  knifeClearanceStrategies: [
+    { knifeSize: 0.365, type: 'offset', value: 0 },
+    { knifeSize: 0.243, type: 'offset', value: 0.003 },
+    { knifeSize: 0.480, type: 'split', value: 0.010 },
   ],
 };
 
@@ -54,8 +56,8 @@ export const SLITTER_4: MachineProfile = {
   knives: [0.375],
   clearanceOnly: [0.0505],
   arborLength: 67,
-  knifeClearanceOffsets: [
-    { knifeSize: 0.375, bottom: (clr) => clr, top: () => 0 },
+  knifeClearanceStrategies: [
+    { knifeSize: 0.375, type: 'offset', value: 0 },
   ],
 };
 

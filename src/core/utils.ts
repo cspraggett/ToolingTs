@@ -1,10 +1,24 @@
 import { Tool } from './solver';
-import { KnifeClearanceOffset } from '../config/machine-profiles';
+import { MachineProfile, KnifeClearanceStrategy } from '../config/machine-profiles';
 
 // --- Shared Unit Conversion ---
-const UNITS_PER_INCH = 1000;
-export const inchesToUnits = (inches: number) => Math.round(inches * UNITS_PER_INCH);
-export const unitsToInches = (units: number) => units / UNITS_PER_INCH;
+export const DEFAULT_UNITS_PER_INCH = 1000;
+export const HALF_THOU_UNITS_PER_INCH = 2000;
+
+/**
+ * Checks if a value contains a "half-thou" (0.0005") component.
+ */
+export const hasHalfThou = (val: number) => {
+  const thousandths = val * 1000;
+  // If thousandths is not an integer (e.g. 1.5), it has a half-thou component.
+  return Math.abs(thousandths - Math.round(thousandths)) > 0.0001;
+};
+
+export const inchesToUnits = (inches: number, precision: number = DEFAULT_UNITS_PER_INCH) => 
+  Math.round(inches * precision);
+
+export const unitsToInches = (units: number, precision: number = DEFAULT_UNITS_PER_INCH) => 
+  units / precision;
 
 export interface ToolSummary {
   size: number;
@@ -53,19 +67,33 @@ export interface ClearanceResult {
 export function computeKnifeClearance(
   knifeSize: number,
   userClearance: number,
-  offsets: KnifeClearanceOffset[]
+  strategies: KnifeClearanceStrategy[]
 ): ClearanceResult {
-  const matchingOffset = offsets.find((offset) => offset.knifeSize === knifeSize);
+  const strategy = strategies.find((s) => s.knifeSize === knifeSize);
   
-  if (!matchingOffset) {
+  if (!strategy) {
     // Default: All clearance on the bottom knife.
     return { bottomClearance: userClearance, topClearance: 0 };
   }
-  
-  return {
-    bottomClearance: matchingOffset.bottom(userClearance),
-    topClearance: matchingOffset.top(userClearance),
-  };
+
+  if (strategy.type === 'offset') {
+    return { bottomClearance: userClearance + strategy.value, topClearance: 0 };
+  }
+
+  if (strategy.type === 'split') {
+    // Split: We shift the gap between arbors.
+    // If userClearance is less than the split value, the gap is on the top.
+    // Otherwise, the surplus gap is on the bottom.
+    const threshold = strategy.value;
+    const diff = userClearance - threshold;
+    if (diff >= 0) {
+      return { bottomClearance: diff, topClearance: 0 };
+    } else {
+      return { bottomClearance: 0, topClearance: -diff };
+    }
+  }
+
+  return { bottomClearance: userClearance, topClearance: 0 };
 }
 
 // --- Shoulder Calculation ---

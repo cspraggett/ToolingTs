@@ -36,48 +36,64 @@ export function SetupResults({ result }: SetupResultsProps) {
 
       <div className="print:m-0 space-y-6">
         {/* Summary Banner */}
-        <Card className="bg-primary/5 border-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl">Setup Summary</CardTitle>
+        <Card className="bg-primary text-primary-foreground border-none shadow-xl relative overflow-hidden">
+          {/* Decorative background circle */}
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <CardHeader className="pb-2 relative z-10">
+            <CardTitle className="text-sm font-black uppercase tracking-[0.2em] opacity-80">Setup Summary</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-4 relative z-10">
             {(result.orderNumber || result.companyName) && (
-              <div className="text-lg font-medium">
+              <div className="text-2xl font-black tracking-tight leading-tight">
                 {result.orderNumber && (
-                  <>Order: <span className="font-bold">{result.orderNumber}</span></>
+                  <span>Order {result.orderNumber}</span>
                 )}
-                {result.orderNumber && result.companyName && " | "}
+                {result.orderNumber && result.companyName && <span className="mx-3 opacity-40 font-light">|</span>}
                 {result.companyName && (
-                  <>Company: <span className="font-bold">{result.companyName}</span></>
+                  <span className="opacity-90">{result.companyName}</span>
                 )}
               </div>
             )}
-            <div className="text-sm">
-              Coil Width: <strong>{formatInches(result.coilWidth)}"</strong>
-              {result.coilWeight && (
-                <> | Weight: <strong>{result.coilWeight} lbs</strong></>
-              )}
-              {result.gauge && (
-                <> | Gauge: <strong>{formatInches(parseFloat(result.gauge))}"</strong></>
-              )}
-              {" | "} Clearance: <strong>{formatInches(result.clearance)}"</strong>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Coil Width</span>
+                <span className="text-xl font-black tabular-nums tracking-tighter">{formatInches(result.coilWidth)}"</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Gauge / Weight</span>
+                <span className="text-xl font-black tracking-tighter">
+                  {result.gauge ? `${formatInches(parseFloat(result.gauge))}"` : "N/A"}
+                  {result.coilWeight && <span className="text-sm font-bold opacity-70 ml-1">({result.coilWeight}#)</span>}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Edge Trim</span>
+                <span className="text-xl font-black tracking-tighter">{formatInches(result.edgeTrim)}"</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Clearance</span>
+                <span className="text-xl font-black tracking-tighter">{formatInches(result.clearance)}"</span>
+              </div>
             </div>
-            <div className="text-sm">
-              Edge Trim: <strong>{formatInches(result.edgeTrim)}"</strong>
-              {" | "}
-              Setup Width: <strong>{formatInches(result.stripTotal)}"</strong>
-              {!result.shouldersValid && (
-                <span className="text-destructive font-bold ml-2"> (Shoulders below 1"!)</span>
-              )}
+
+            <div className="pt-4 mt-2 border-t border-white/20 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-baseline space-x-2">
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-70">Arbor Used:</span>
+                <span className="font-bold tabular-nums">B: {formatInches(result.bottomArborUsed)}" / T: {formatInches(result.topArborUsed)}"</span>
+              </div>
+              <div className="flex items-baseline space-x-2 md:justify-end">
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-70">Total:</span>
+                <span className="font-bold">{result.grandTotalTools} tools | {result.totalKnives} knives</span>
+              </div>
             </div>
-            <div className="text-sm">
-              Bottom Arbor: <strong>{formatInches(result.bottomArborUsed)}"</strong>
-              {" | "}
-              Top Arbor: <strong>{formatInches(result.topArborUsed)}"</strong>
-            </div>
-            <div className="pt-2 mt-2 border-t text-sm font-medium">
-              Total: {result.grandTotalTools} tools | {result.totalKnives} knives
-            </div>
+
+            {!result.shouldersValid && (
+              <div className="mt-4 p-3 bg-white text-destructive rounded-lg flex items-center justify-center space-x-2 animate-pulse">
+                <span className="font-black uppercase tracking-tighter text-sm italic underline decoration-2 underline-offset-2">CRITICAL: SHOULDERS BELOW 1.0" SAFETY LIMIT</span>
+              </div>
+            )}
           </CardContent>
         </Card>
 

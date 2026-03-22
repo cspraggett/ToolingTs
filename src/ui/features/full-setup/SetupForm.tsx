@@ -135,73 +135,87 @@ export function SetupForm({ setup }: SetupFormProps) {
       )}
 
       {/* === STRIP LIST === */}
-      <Card className="mt-6 border shadow-sm">
-        <CardContent className="p-4 space-y-4">
-          <div className="flex items-center justify-between border-b pb-4">
-            <h3 className="text-lg font-semibold tracking-tight">Strips</h3>
-            <div className="space-x-2">
-              <Button variant="outline" size="sm" onClick={() => setShowOptimizer((v) => !v)}>
+      <Card className="mt-8 border-2 shadow-md overflow-hidden bg-white">
+        <div className="h-1 bg-slate-200 w-full" />
+        <CardContent className="p-6 space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex flex-col">
+              <h3 className="text-xl font-black tracking-tight text-slate-900">Strips to Cut</h3>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Input material widths</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowOptimizer((v) => !v)}
+                className="font-black text-[10px] uppercase tracking-widest text-primary hover:bg-primary/5"
+              >
                 {showOptimizer ? "Hide Optimizer" : "Show Optimizer"}
               </Button>
-              <Button size="sm" onClick={setup.addStrip}>
+              <Button size="sm" onClick={setup.addStrip} className="font-black text-xs shadow-md">
                 + Add Strip
               </Button>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {setup.strips.map((strip, index) => (
-              <div key={strip.id} className="flex gap-2 items-start">
-                <div className="flex-1 space-y-1">
-                  {index === 0 && <Label className="text-xs text-muted-foreground uppercase">Width</Label>}
+              <div key={strip.id} className={`flex gap-3 items-end p-3 rounded-xl border-2 transition-all ${index % 2 === 0 ? "bg-slate-50/50 border-slate-100" : "bg-white border-transparent"}`}>
+                <div className="flex-1 space-y-1.5">
+                  <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Width (Inches)</Label>
                   <Input
                     type="number"
                     step="0.001"
-                    placeholder='e.g. 5.000'
+                    placeholder="0.000"
                     value={strip.width}
                     onChange={(e) => setup.updateStrip(strip.id, "width", e.target.value)}
+                    className="font-mono font-bold border-2 focus-visible:ring-primary/20"
                   />
                 </div>
-                <div className="w-24 space-y-1">
-                  {index === 0 && <Label className="text-xs text-muted-foreground uppercase">Qty</Label>}
+                <div className="w-24 space-y-1.5">
+                  <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Qty</Label>
                   <Input
                     type="number"
                     min="1"
                     step="1"
                     value={strip.quantity}
                     onChange={(e) => setup.updateStrip(strip.id, "quantity", e.target.value)}
+                    className="font-bold border-2 text-center focus-visible:ring-primary/20"
                   />
                 </div>
                 {showOptimizer && (
                   <>
-                    <div className="w-24 space-y-1">
-                      {index === 0 && <Label className="text-xs text-muted-foreground uppercase">- Tol</Label>}
+                    <div className="w-24 space-y-1.5">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">- Tol</Label>
                       <Input
                         type="number"
                         step="0.001"
                         value={strip.minusTol}
                         onChange={(e) => setup.updateStrip(strip.id, "minusTol", e.target.value)}
+                        className="font-mono font-bold border-2 focus-visible:ring-primary/20 text-orange-600 bg-orange-50/20"
                       />
                     </div>
-                    <div className="w-24 space-y-1">
-                      {index === 0 && <Label className="text-xs text-muted-foreground uppercase">+ Tol</Label>}
+                    <div className="w-24 space-y-1.5">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">+ Tol</Label>
                       <Input
                         type="number"
                         step="0.001"
                         value={strip.plusTol}
                         onChange={(e) => setup.updateStrip(strip.id, "plusTol", e.target.value)}
+                        className="font-mono font-bold border-2 focus-visible:ring-primary/20 text-blue-600 bg-blue-50/20"
                       />
                     </div>
                   </>
                 )}
-                <div className={`${index === 0 ? "pt-5" : ""}`}>
+                <div className="pb-0.5">
                   <Button
-                    variant="destructive"
+                    variant="ghost"
                     size="icon"
                     onClick={() => setup.removeStrip(strip.id)}
                     disabled={setup.strips.length === 1}
+                    className="h-10 w-10 text-slate-300 hover:text-destructive hover:bg-destructive/5 rounded-lg"
                   >
-                    X
+                    <span className="font-bold">✕</span>
                   </Button>
                 </div>
               </div>
@@ -211,12 +225,12 @@ export function SetupForm({ setup }: SetupFormProps) {
       </Card>
 
       {/* BUTTONS */}
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button variant="outline" onClick={setup.handleReset}>
-          Reset
+      <div className="flex justify-between items-center pt-6 border-t-2 border-slate-100">
+        <Button variant="ghost" onClick={setup.handleReset} className="font-black uppercase tracking-widest text-xs text-slate-400 hover:text-slate-600">
+          Clear Setup
         </Button>
-        <Button onClick={setup.handleCalculate}>
-          Calculate
+        <Button onClick={setup.handleCalculate} className="font-black uppercase tracking-widest py-6 px-10 rounded-xl shadow-xl shadow-primary/20 text-sm">
+          Run Calculation
         </Button>
       </div>
     </div>

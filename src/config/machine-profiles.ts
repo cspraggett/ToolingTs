@@ -15,6 +15,7 @@ export interface MachineProfile {
   strictExclude?: number[];
   arborLength: number; // inches
   knifeClearanceStrategies: KnifeClearanceStrategy[];
+  toolLabels?: Record<number, string>;
 }
 
 // === SLITTER 3 (Current Workstation) ===
@@ -50,7 +51,7 @@ export const SLITTER_4: MachineProfile = {
     // Precision Spacers
     0.0750, 0.0650, 0.0580,
     0.0540, 0.0520, 0.0510,
-    0.0505, // Regrind Compensator
+    0.0505, 
     0.0500
   ],
   knives: [0.375],
@@ -59,6 +60,16 @@ export const SLITTER_4: MachineProfile = {
   knifeClearanceStrategies: [
     { knifeSize: 0.375, type: 'offset', value: 0 },
   ],
+  toolLabels: {
+    0.0500: "a",
+    0.0505: "b",
+    0.0510: "c",
+    0.0520: "d",
+    0.0540: "e",
+    0.0580: "f",
+    0.0650: "g",
+    0.0750: "h"
+  }
 };
 
 // === REGISTRY ===

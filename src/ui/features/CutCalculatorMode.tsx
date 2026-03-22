@@ -113,14 +113,14 @@ export function CutCalculatorMode() {
             <div className={styles.targetInfo}>
               Target: <strong>{formatInches(cut.calculatedTargets.male + cut.result.offset)}"</strong>
             </div>
-            <ResultDisplay result={cut.result.maleResult} />
+            <ResultDisplay result={cut.result.maleResult} labels={cut.currentMachine.toolLabels} />
           </div>
           <div>
             <h3 className={styles.sectionHeader}>Female Setup</h3>
             <div className={styles.targetInfo}>
               Target: <strong>{formatInches(cut.calculatedTargets.female + cut.result.offset)}"</strong>
             </div>
-            <ResultDisplay result={cut.result.femaleResult} />
+            <ResultDisplay result={cut.result.femaleResult} labels={cut.currentMachine.toolLabels} />
           </div>
         </div>
       )}

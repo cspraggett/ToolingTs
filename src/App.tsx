@@ -50,7 +50,7 @@ export default function SteelToolingCalculator() {
           {!singleTools.result ? (
             <p className={styles.helper}>Enter a width to calculate tooling</p>
           ) : (
-            <ResultDisplay result={singleTools.result} />
+            <ResultDisplay result={singleTools.result} labels={singleTools.labels} />
           )}
         </>
       ) : mode === "makeCut" ? (

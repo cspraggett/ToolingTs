@@ -28,6 +28,7 @@ export function useSteelTooling() {
   return {
     targetWidth,
     result,
-    handleInputChange
+    handleInputChange,
+    labels: DEFAULT_MACHINE.toolLabels
   };
 }

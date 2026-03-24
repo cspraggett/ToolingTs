@@ -1,4 +1,4 @@
-# Steel Tooling Calculator - Project Context
+# Slit Master - Project Context
 
 ## Overview
 This project is a React (TypeScript) application for calculating slitter setup tooling. It handles complex optimization for "male" and "female" tooling pairs within specified tolerance windows.
@@ -33,3 +33,14 @@ We refactored the data structure to mirror the physical arbors of the slitting m
 - Always ensure `MachineProfile` is imported in `useFullSetup.ts` to avoid build failures.
 - The `vite.config.ts` has a `base` set to `/ToolingTs/` for GitHub Pages compatibility.
 - **Global Styles**: Global light mode is enforced in `index.css` to override system-level dark mode settings.
+
+## Upcoming Feature: Overarm Setup
+- **Objective**: Generate a matching overarm layout from the slitter setup.
+- **Tooling Inventory**: 3", 2", 1", 0.500", 0.250", 0.125", 0.0625", 0.03125" (note: user specified 0.0325, likely 1/32" = 0.03125).
+- **Separators**: 0.094" separator discs.
+- **Cut Width**: Each cut is slitter cut width + 0.0625" (padding).
+- **Disc Logic**: Each cut is surrounded by separator discs ($N$ cuts = $N+1$ discs).
+- **Shoulder Logic**: 
+  - Overarm shoulders are reversed from slitter setup (Slitter Opening = Overarm Closing).
+  - "Extra width" (from 0.0625 padding + 0.094 discs vs slitter knives/clearance) must be removed evenly from both shoulders to keep overarms centered.
+

@@ -1,4 +1,4 @@
-# Steel Tooling Calculator
+# Slit Master
 
 A high-precision slitter setup tooling calculator built with **React**, **TypeScript**, and **Vite**. This tool automates the complex task of calculating optimal tooling stacks for steel slitting operations, ensuring physical stability and adherence to tight tolerances.
 
@@ -10,13 +10,10 @@ The latest version is deployed to GitHub Pages:
 
 ## ✨ Key Features
 
-### 1. Single Mode
-Quickly calculate a single tooling stack for any target width.
-
-### 2. Cut Calculator (Make Cut)
+### 1. Cut Calculator (Make Cut)
 Handles "Dual Setup" optimization where both Male and Female tooling are calculated for a specific strip width. It automatically finds the best setup within your allowed tolerance window.
 
-### 3. Full Setup (New 🛠️)
+### 2. Full Setup
 A comprehensive mode for professional slitter operators:
 - **Order Management**: Track Order #, Company, Coil Weight, and Gauge.
 - **Auto-Centering**: Calculates 4 specific shoulder points (Opening/Closing on Top/Bottom arbors) to perfectly center the setup.

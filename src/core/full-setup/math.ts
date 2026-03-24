@@ -54,8 +54,47 @@ export function computeShoulders(
   topClearance: number,
   bottomArborUsed: number,
   topArborUsed: number,
-  machineId?: string
+  machineId?: string,
+  coilWidth: number = 0,
+  gauge: number = 0
 ) {
+  // Slitter 4 Specific Shoulder Logic (Permanent Shoulders + Center tracking)
+  if (machineId === 'slitter-4') {
+    const TOTAL_ARBOR_LENGTH = 66.1750;
+    const PERMANENT_SHOULDER = 2.050;
+    const MACHINE_CENTER = 34.0;
+    const KNIFE_WIDTH = 0.3750;
+
+    // 1. Calculate outboard opening shoulders (relative to machine center)
+    // The test case (60" coil -> 1.790 centering) implies a fixed 0.160" outboard knife offset.
+    // This positions the outer edge of the first knife 0.160" inside the nominal coil edge.
+    const OUTBOARD_KNIFE_OFFSET = 0.160; 
+    const coilEdge = MACHINE_CENTER - (coilWidth / 2);
+    const firstKnifeOuterEdge = coilEdge - OUTBOARD_KNIFE_OFFSET;
+    const centeringAmount = roundToTenThousandth(firstKnifeOuterEdge - PERMANENT_SHOULDER);
+    
+    const topOpening = roundToTenThousandth(centeringAmount - KNIFE_WIDTH);
+    const bottomOpening = roundToTenThousandth(centeringAmount + bottomClearance);
+
+    // 2. Calculate inboard closing shoulders
+    // Usable Arbor = 66.175 - 2.050 = 64.125
+    const usableArbor = TOTAL_ARBOR_LENGTH - PERMANENT_SHOULDER;
+    
+    // Each closing shoulder is the EXACT remainder for its own arbor
+    const topClosing = roundToTenThousandth(usableArbor - topOpening - topArborUsed);
+    const bottomClosing = roundToTenThousandth(usableArbor - bottomOpening - bottomArborUsed);
+
+    const minShoulder = Math.min(bottomOpening, topOpening, bottomClosing, topClosing);
+    return { 
+      bottomOpening, 
+      topOpening, 
+      bottomClosing, 
+      topClosing, 
+      isValid: minShoulder >= 1.0 
+    };
+  }
+
+  // Default Shoulder Logic (Centering-based)
   // 1. Center the entire layout on the arbor in 1/8" increments for physical simplicity.
   const rawBaseShoulder = (arborLength - stripTotal) / 2;
   const baseShoulder = Math.round(rawBaseShoulder / 0.125) * 0.125;
@@ -67,12 +106,6 @@ export function computeShoulders(
   let bottomOpening = roundToTenThousandth(baseShoulder + bottomClearance);
   let topOpening = roundToTenThousandth(baseShoulder - knifeRoundedUp + topClearance);
 
-  // Slitter 4 Specific Offset: Subtract 2" from opening, add 2" to closing
-  if (machineId === 'slitter-4') {
-    bottomOpening = roundToTenThousandth(bottomOpening - 2.0);
-    topOpening = roundToTenThousandth(topOpening - 2.0);
-  }
-  
   const bottomClosing = roundToTenThousandth(arborLength - bottomOpening - bottomArborUsed);
   const topClosing = roundToTenThousandth(arborLength - topOpening - topArborUsed);
 

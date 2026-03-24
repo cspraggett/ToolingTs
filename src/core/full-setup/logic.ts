@@ -132,7 +132,9 @@ export function generateFullSetup(
     topClearance,
     bottomArborUsed,
     topArborUsed,
-    machine.id
+    machine.id,
+    coilWidth,
+    config.gauge
   );
 
   // 5. Solve tooling stacks for shoulders
@@ -151,8 +153,10 @@ export function generateFullSetup(
 
   const solvedShoulders: Record<string, SolverResult> = {};
   for (const target of shoulderTargets) {
+    const targetValue = target.value;
+
     // Normalize target to the requested precision to avoid floating point drift
-    const normalizedTarget = unitsToInches(inchesToUnits(target.value, globalPrecision), globalPrecision);
+    const normalizedTarget = unitsToInches(inchesToUnits(targetValue, globalPrecision), globalPrecision);
 
     const solution = findToolingSetup(normalizedTarget, machine, { 
       strictMode: target.strict,

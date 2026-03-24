@@ -1,4 +1,4 @@
-# Steel Tooling Calculator - Improvement Roadmap
+# Slit Master - Improvement Roadmap
 
 ## 1. Data Integrity & Validation (High Impact)
 - [x] **Integrate Zod for Input Validation**: Replace manual `parseFloat` and `if/else` checks in `validator.ts` with declarative schemas.
@@ -14,6 +14,11 @@
 - [x] **Component Library Integration**: Transition to `shadcn/ui` or a similar Radix-based library for pro-grade interactive elements.
 - [ ] **Interactive Visualizations**: Add a canvas-based preview of the arbor layout to help operators visualize the setup before physically building it.
 - [ ] **Offline Support (PWA)**: Ensure the calculator works in parts of the plant with poor Wi-Fi.
+
+## 4. Overarm Setup Generation (New Feature)
+- [ ] **Overarm Calculation Engine**: Implement logic to derive overarm tooling from a slitter setup.
+- [ ] **Shoulder Reversal & Adjustment**: Automatically reverse opening/closing shoulders and adjust for separator disc width.
+- [ ] **Overarm Print View**: Create a dedicated view for the overarm setup sheet.
 
 ## 4. Architectural Patterns
 - [ ] **Command/Action Pattern**: Move UI state management from `useFullSetup.ts` into a dedicated state machine or reducer-based action system for easier debugging.

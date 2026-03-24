@@ -56,7 +56,7 @@ export const SLITTER_4: MachineProfile = {
   ],
   knives: [0.375],
   clearanceOnly: [0.0505],
-  arborLength: 67,
+  arborLength: 66.1750,
   knifeClearanceStrategies: [
     { knifeSize: 0.375, type: 'offset', value: 0 },
   ],

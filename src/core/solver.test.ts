@@ -1,148 +1,177 @@
-import { describe, it, expect } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
 import { findToolingSetup } from './solver';
-import { DEFAULT_MACHINE, SLITTER_4 } from '../config/machine-profiles';
+import { MachineProfile } from '../config/machine-profiles';
 
-describe('Core Solver (Pure)', () => {
-  const machine = DEFAULT_MACHINE;
-
-  it('finds a simple exact match (1.0")', () => {
-    const result = findToolingSetup(1.0, machine);
-
-    expect(result).not.toBeNull();
-    expect(result?.stack.map(t => t.size)).toContain(1.0);
-  });
-
-  it('respects the Strict Mode (No .031 or .062)', () => {
-    // 0.031 would be the perfect answer, but we ban it.
-    // It should fail or find a complex alternative if possible.
-    const result = findToolingSetup(0.031, machine, { strictMode: true });
-
-    // With your current list, removing .031 makes 0.031 impossible.
-    expect(result).toBeNull();
-  });
-
-  it('finds .031 when Strict Mode is OFF', () => {
-    const result = findToolingSetup(0.031, machine, { strictMode: false });
-
-    expect(result).not.toBeNull();
-    expect(result?.stack[0].size).toBe(0.031);
-  });
-
-  it('never uses more than 2 of the same tool', () => {
-    // 0.093 could be 3x 0.031.
-    // But we limit to 2. So it must find 0.062 + 0.031.
-    const result = findToolingSetup(0.093, machine, { strictMode: false });
-
-    expect(result).not.toBeNull();
-
-    const count031 = result?.stack.filter(t => t.size === 0.031).length;
-    expect(count031).toBeLessThanOrEqual(2);
-  });
+// Mock machine profile for testing
+const createMockProfile = (): MachineProfile => ({
+  id: 'test-machine',
+  arborLength: 60,
+  tools: [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 0.0625, 0.125, 0.250, 0.375],
+  strictExclude: [0.125, 0.25],
+  clearanceOnly: [3.0],
+  toolLabels: {},
+  knifeClearanceStrategies: []
 });
 
-describe('Greedy/DP boundary edge cases', () => {
-  const machine = DEFAULT_MACHINE;
+describe('solver.ts', () => {
+  let mockProfile: MachineProfile;
 
-  it('solves a target just above the greedy buffer', () => {
-    // 2.400" — just above 2" buffer, greedy should not overshoot
-    const result = findToolingSetup(2.4, machine);
-    expect(result).not.toBeNull();
-    const total = result!.stack.reduce((sum, t) => sum + t.size, 0);
-    expect(total).toBeCloseTo(2.4);
+  beforeEach(() => {
+    mockProfile = createMockProfile();
   });
 
-  it('solves a target that needs only small tools (0.400")', () => {
-    // 0.400" — no 3"/2"/1" tools needed, pure small tool territory
-    const result = findToolingSetup(0.4, machine);
-    expect(result).not.toBeNull();
-    expect(result!.stack.length).toBe(1); // 0.4 is an exact tool
-    expect(result!.stack[0].size).toBe(0.4);
+  describe('findToolingSetup', () => {
+    test('should return null for zero or negative target', () => {
+      expect(findToolingSetup(0, mockProfile)).toBeNull();
+      expect(findToolingSetup(-1, mockProfile)).toBeNull();
+    });
+
+    test('should handle half-thou precision when needed', () => {
+      const halfThouMachine: MachineProfile = {
+        ...mockProfile,
+        tools: [0.125, 0.2505, 0.5]
+      };
+      const result = findToolingSetup(0.2505, halfThouMachine);
+      expect(result).toBeTruthy();
+      expect(result?.stack[0].size).toBe(0.2505);
+    });
+
+    test('should respect strict mode exclusions', () => {
+      const result = findToolingSetup(0.375, mockProfile, { strictMode: true });
+      // Should not use 0.125 + 0.25 since they're in strictExclude
+      expect(result?.stack).not.toContainEqual(expect.objectContaining({ size: 0.125 }));
+      expect(result?.stack).not.toContainEqual(expect.objectContaining({ size: 0.25 }));
+    });
+
+    test('should filter clearance-only tools by default', () => {
+      const result = findToolingSetup(3.0, mockProfile);
+      // 3.0 is clearance-only, should not be used in normal stacking
+      expect(result?.stack).not.toContainEqual(expect.objectContaining({ size: 3.0 }));
+    });
+
+    test('should allow clearance-only tools when skipClearanceFilter is true', () => {
+      const result = findToolingSetup(3.0, mockProfile, { skipClearanceFilter: true });
+      expect(result?.stack).toContainEqual(expect.objectContaining({ size: 3.0 }));
+    });
+
+    test('should enforce max 2 tools per size for sizes < 1.0"', () => {
+      const smallToolsMachine: MachineProfile = {
+        ...mockProfile,
+        tools: [0.125, 0.25, 0.5]
+      };
+      const result = findToolingSetup(1.0, smallToolsMachine);
+      const toolCounts = result?.stack.reduce((acc, tool) => {
+        acc[tool.size] = (acc[tool.size] || 0) + 1;
+        return acc;
+      }, {} as Record<number, number>);
+      
+      Object.entries(toolCounts || {}).forEach(([size, count]) => {
+        if (parseFloat(size) < 1.0) {
+          expect(count).toBeLessThanOrEqual(2);
+        }
+      });
+    });
+
+    test('should allow unlimited block spacers (>= 1.0")', () => {
+      const blockSpacerMachine: MachineProfile = {
+        ...mockProfile,
+        tools: [1.0] // Only 1.0 is available
+      };
+      const result = findToolingSetup(5.0, blockSpacerMachine);
+      const oneInchTools = result?.stack.filter(t => t.size === 1.0) || [];
+      expect(oneInchTools.length).toBe(5); // Should allow exactly 5
+    });
+
+    test('should use greedy algorithm for large targets', () => {
+      const result = findToolingSetup(20.0, mockProfile);
+      // Should use largest available tools first for efficiency
+      const largestTool = Math.max(...mockProfile.tools.filter(t => t !== 3.0));
+      expect(result?.stack[0].size).toBe(largestTool);
+    });
+
+    test('should return null when no solution exists', () => {
+      const impossibleMachine: MachineProfile = {
+        ...mockProfile,
+        tools: [10.0] // Only huge tools
+      };
+      const result = findToolingSetup(0.1, impossibleMachine);
+      expect(result).toBeNull();
+    });
+
+    test('should handle edge case: target exactly equals a tool size', () => {
+      const result = findToolingSetup(0.5, mockProfile);
+      expect(result?.stack).toHaveLength(1);
+      expect(result?.stack[0].size).toBe(0.5);
+    });
+
+    test('should prefer fewer tools when possible', () => {
+      const result1 = findToolingSetup(1.0, mockProfile);
+      const result2 = findToolingSetup(1.0, { 
+        ...mockProfile, 
+        tools: [0.5, 0.25, 0.125] 
+      });
+      
+      // 1.0" tool is better than 0.5 + 0.5
+      expect(result1?.stack.length).toBeLessThanOrEqual(result2?.stack.length || Infinity);
+    });
+
+    test('should handle very small targets with precision', () => {
+      const tinyMachine: MachineProfile = {
+        ...mockProfile,
+        tools: [0.001, 0.002, 0.005]
+      };
+      const result = findToolingSetup(0.003, tinyMachine);
+      expect(result?.stack.reduce((sum, t) => sum + t.size, 0)).toBeCloseTo(0.003, 6);
+    });
+
+    test('should handle mixed precision in tool inventory', () => {
+      const mixedMachine: MachineProfile = {
+        ...mockProfile,
+        tools: [0.125, 0.2505, 0.5, 0.7505, 1.0]
+      };
+      const result = findToolingSetup(1.0005, mixedMachine);
+      expect(result).toBeTruthy();
+      // Should use half-thou precision
+      const total = result?.stack.reduce((sum, t) => sum + t.size, 0) || 0;
+      expect(total).toBeCloseTo(1.0005, 4);
+    });
   });
 
-  it('solves a large target where greedy packs many 3" tools (20.5")', () => {
-    const result = findToolingSetup(20.5, machine);
-    expect(result).not.toBeNull();
-    const total = result!.stack.reduce((sum, t) => sum + t.size, 0);
-    expect(total).toBeCloseTo(20.5);
-    // Optimal: 6x3" + 2" + 0.5" = 8 tools
-    expect(result!.stack.length).toBeLessThanOrEqual(8);
-  });
+  describe('solveOptimalStack DP algorithm', () => {
+    test('should find optimal solution for complex combinations', () => {
+      const complexMachine: MachineProfile = {
+        ...mockProfile,
+        tools: [0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875, 1.0]
+      };
+      const target = 2.875;
+      const result = findToolingSetup(target, complexMachine);
+      expect(result).toBeTruthy();
+      const total = result?.stack.reduce((sum, t) => sum + t.size, 0) || 0;
+      expect(total).toBeCloseTo(target, 4);
+    });
 
-  it('solves target just under largest tool (2.875")', () => {
-    // 2.875" — can't use a 3", must use 2" + 0.875"
-    const result = findToolingSetup(2.875, machine);
-    expect(result).not.toBeNull();
-    expect(result!.stack.length).toBe(2);
-    const total = result!.stack.reduce((sum, t) => sum + t.size, 0);
-    expect(total).toBeCloseTo(2.875);
-  });
+    test('should minimize tool count as primary objective', () => {
+      const machine: MachineProfile = {
+        ...mockProfile,
+        tools: [0.5, 1.0, 1.5, 2.0]
+      };
+      const result = findToolingSetup(3.0, machine);
+      // Best solution: 1.5 + 1.5 (2 tools) not 0.5 * 6 (6 tools)
+      expect(result?.stack.length).toBe(2);
+    });
 
-  it('solves target that crosses greedy boundary with non-round remainder (7.375")', () => {
-    // 7.375" — greedy takes 3" + 3", remainder 1.375" solved by DP
-    // optimal: 3+3+1+0.375 = 4 tools
-    const result = findToolingSetup(7.375, machine);
-    expect(result).not.toBeNull();
-    const total = result!.stack.reduce((sum, t) => sum + t.size, 0);
-    expect(total).toBeCloseTo(7.375);
-    expect(result!.stack.length).toBeLessThanOrEqual(4);
-  });
-
-  it('prefers fewer tools over greedy (5.0" = 3+2 not 3+1+1)', () => {
-    const result = findToolingSetup(5.0, machine);
-    expect(result).not.toBeNull();
-    // Optimal: 3" + 2" = 2 tools
-    expect(result!.stack.length).toBe(2);
-  });
-
-  it('handles target exactly equal to greedy buffer (2.0")', () => {
-    const result = findToolingSetup(2.0, machine);
-    expect(result).not.toBeNull();
-    expect(result!.stack.length).toBe(1);
-    expect(result!.stack[0].size).toBe(2.0);
-  });
-
-  it('solves target needing many small precision tools (0.506")', () => {
-    // 0.506" — needs combo like 0.5 + small shim, or 0.256 + 0.25, etc.
-    const result = findToolingSetup(0.506, machine);
-    expect(result).not.toBeNull();
-    const total = result!.stack.reduce((sum, t) => sum + t.size, 0);
-    expect(total).toBeCloseTo(0.506);
-  });
-
-  it('solves 6.0" exactly (was the old buffer boundary)', () => {
-    const result = findToolingSetup(6.0, machine);
-    expect(result).not.toBeNull();
-    // 3+3 = 2 tools
-    expect(result!.stack.length).toBe(2);
-  });
-
-  it('solves 4.0" — where greedy at buffer=2 takes one 3", leaving 1" for DP', () => {
-    const result = findToolingSetup(4.0, machine);
-    expect(result).not.toBeNull();
-    // 3+1 = 2 tools, or could be 2+2 = 2 tools — either way, 2 tools
-    expect(result!.stack.length).toBe(2);
-  });
-});
-
-describe('Clearance-Only Tools (Slitter 4)', () => {
-  it('excludes 0.0505 from solver stacks', () => {
-    // 0.101 = 2x 0.0505, but solver should use 0.1 + something else
-    const result = findToolingSetup(0.101, SLITTER_4);
-
-    expect(result).not.toBeNull();
-    const has0505 = result?.stack.some(t => t.size === 0.0505);
-    expect(has0505).toBe(false);
-  });
-
-  it('still solves targets that would have used 0.0505', () => {
-    // 0.1505 = 0.1 + 0.0505, but without 0.0505 it should find 0.1 + 0.05 + something
-    const result = findToolingSetup(0.1505, SLITTER_4);
-
-    // May be null if no exact combination exists, which is fine —
-    // the point is 0.0505 must not appear
-    if (result) {
-      const has0505 = result.stack.some(t => t.size === 0.0505);
-      expect(has0505).toBe(false);
-    }
+    test('should prefer larger tools when tool counts are equal', () => {
+      const machine: MachineProfile = {
+        ...mockProfile,
+        tools: [0.5, 0.75, 1.0, 1.25]
+      };
+      const result = findToolingSetup(2.0, machine);
+      // Both [1.0, 1.0] and [1.25, 0.75] have 2 tools.
+      // Our logic prefers [1.25, 0.75] because 1.25 > 1.0.
+      expect(result?.stack.length).toBe(2);
+      const sizes = result?.stack.map(t => t.size);
+      expect(sizes).toContain(1.25);
+      expect(sizes).toContain(0.75);
+    });
   });
 });

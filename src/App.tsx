@@ -1,5 +1,7 @@
 import { FullSetupMode } from "./ui/features/FullSetupMode";
+import { CoilCalculator } from "./ui/features/CoilCalculator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function SlitMaster() {
   return (
@@ -11,16 +13,38 @@ export default function SlitMaster() {
           </h1>
         </header>
 
-        <Card className="shadow-lg border-slate-200 overflow-hidden print:shadow-none print:border-none print:bg-transparent">
-          <div className="h-1.5 bg-primary w-full no-print" />
-          <CardHeader className="pb-4 no-print">
-            <CardTitle className="text-2xl">Full Setup Mode</CardTitle>
-            <CardDescription className="text-slate-500 font-medium">Generate a complete master arbor layout for multiple strips.</CardDescription>
-          </CardHeader>
-          <CardContent className="print:p-0">
-            <FullSetupMode />
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="fullSetup" className="w-full">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8 no-print">
+            <TabsTrigger value="fullSetup">Slitter Setup</TabsTrigger>
+            <TabsTrigger value="coilTools">Coil Tools</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="fullSetup">
+            <Card className="shadow-lg border-slate-200 overflow-hidden print:shadow-none print:border-none print:bg-transparent">
+              <div className="h-1.5 bg-primary w-full no-print" />
+              <CardHeader className="pb-4 no-print">
+                <CardTitle className="text-2xl">Full Setup Mode</CardTitle>
+                <CardDescription className="text-slate-500 font-medium">Generate a complete master arbor layout for multiple strips.</CardDescription>
+              </CardHeader>
+              <CardContent className="print:p-0">
+                <FullSetupMode />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="coilTools">
+            <Card className="shadow-lg border-slate-200 overflow-hidden print:shadow-none print:border-none print:bg-transparent">
+              <div className="h-1.5 bg-primary w-full no-print" />
+              <CardHeader className="pb-4 no-print">
+                <CardTitle className="text-2xl">Coil Tools</CardTitle>
+                <CardDescription className="text-slate-500 font-medium">Calculate coil weight and stopping diameters.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <CoilCalculator />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

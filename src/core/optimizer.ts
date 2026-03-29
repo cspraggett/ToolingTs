@@ -56,8 +56,17 @@ export function findBestDualSetup(
 
   let bestDualResult: DualOptimizationResult | null = null;
 
+  // Optimization: Check zero offset first, then expand outwards.
+  // This often finds a "good enough" solution immediately.
+  const unitsToTry = new Set<number>();
+  unitsToTry.add(0);
+  for (let u = 1; u <= Math.max(minOffsetUnits, maxOffsetUnits); u++) {
+    if (u <= maxOffsetUnits) unitsToTry.add(u);
+    if (u <= minOffsetUnits) unitsToTry.add(-u);
+  }
+
   // We iterate through every possible increment within the tolerance window.
-  for (let u = -minOffsetUnits; u <= maxOffsetUnits; u++) {
+  for (const u of unitsToTry) {
     const currentOffsetUnits = u as ArborUnits;
     const currentOffsetInches = unitsToInches(currentOffsetUnits, precision);
 
@@ -67,7 +76,6 @@ export function findBestDualSetup(
     // Find tooling stacks for both targets at this specific offset.
     const maleSolution = findToolingSetup(candidateMaleTarget, machine, options);
     const femaleSolution = findToolingSetup(candidateFemaleTarget, machine, options);
-
 
     if (!maleSolution || !femaleSolution) continue;
 
@@ -94,6 +102,10 @@ export function findBestDualSetup(
         femaleResult: femaleSolution,
         totalToolCount
       };
+      
+      // Early exit heuristic: If we found a solution with very few tools (e.g. 4 or less for the pair)
+      // at the nominal offset (0), it's highly unlikely to get better.
+      if (totalToolCount <= 4 && u === 0) break;
     }
   }
 

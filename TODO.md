@@ -15,11 +15,11 @@
 - [ ] **Interactive Visualizations**: Add a canvas-based preview of the arbor layout to help operators visualize the setup before physically building it.
 - [ ] **Offline Support (PWA)**: Ensure the calculator works in parts of the plant with poor Wi-Fi.
 
-## 4. Overarm Setup Generation (New Feature)
-- [ ] **Overarm Calculation Engine**: Implement logic to derive overarm tooling from a slitter setup.
-- [ ] **Shoulder Reversal & Adjustment**: Automatically reverse opening/closing shoulders and adjust for separator disc width.
-- [ ] **Overarm Print View**: Create a dedicated view for the overarm setup sheet.
+## 4. Coil Calculator Utility (New Feature)
+- [x] **Task 1: Core Math Logic**: Create `src/core/coil-math.ts` and `src/core/coil-math.test.ts`. Implement `calculateCoilWeight` and `calculateStopOD`.
+- [x] **Task 2: UI Component Implementation**: Create `src/ui/features/CoilCalculator.tsx` with inputs for Width, Gauge, ID, and Current OD. Show the "Stop OD" result.
+- [x] **Task 3: App Integration**: Update `src/App.tsx` with tabs to switch between "Slitter Setup" and "Coil Tools".
 
-## 4. Architectural Patterns
+## 5. Architectural Patterns
 - [ ] **Command/Action Pattern**: Move UI state management from `useFullSetup.ts` into a dedicated state machine or reducer-based action system for easier debugging.
 - [ ] **Plugin System for Machines**: Make machine-specific "Clearance Strategies" more pluggable to support vastly different machine types in the future.

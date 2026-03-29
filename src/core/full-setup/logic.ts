@@ -57,8 +57,15 @@ export function generateFullSetup(
   let grandTotalTools = 0;
   let cutCounter = 1;
 
+  // Cache for identical strip calculations to avoid redundant O(N) optimizations
+  const stripCache = new Map<string, any>();
+
   for (const strip of strips) {
-    for (let i = 0; i < strip.quantity; i++) {
+    const cacheKey = `${strip.width}-${strip.minus}-${strip.plus}-${strictMode}`;
+    
+    let dualResult = stripCache.get(cacheKey);
+
+    if (!dualResult) {
       const nominalFemale = strip.width;
       
       // Determine precision for this strip to avoid floating point drift
@@ -78,7 +85,7 @@ export function generateFullSetup(
         return err(`Strip ${formatInches(strip.width)}": knives + clearance exceed the strip width.`);
       }
 
-      const dualResult = findBestDualSetup(
+      dualResult = findBestDualSetup(
         nominalMale,
         nominalFemale,
         { minus: strip.minus, plus: strip.plus },
@@ -87,8 +94,14 @@ export function generateFullSetup(
         { strictMode: isStrictCapable && strictMode }
       );
 
-      if (!dualResult) return err(`No solution found for strip width ${formatInches(strip.width)}".`);
+      if (dualResult) {
+        stripCache.set(cacheKey, dualResult);
+      }
+    }
 
+    if (!dualResult) return err(`No solution found for strip width ${formatInches(strip.width)}".`);
+
+    for (let i = 0; i < strip.quantity; i++) {
       const type: 'male-bottom' | 'female-bottom' = (cutCounter % 2 !== 0) ? 'male-bottom' : 'female-bottom';
       
       const bottomStack = type === 'male-bottom' ? dualResult.maleResult : dualResult.femaleResult;

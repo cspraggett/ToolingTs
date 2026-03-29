@@ -53,48 +53,53 @@ const getActiveTools = (
  * It minimizes the number of tools used and breaks ties by preferring larger tools.
  */
 const solveOptimalStack = (targetUnits: ArborUnits, inventory: Tool[]): Tool[] | null => {
-  // dp[units] stores the best (fewest tools) stack for that exact unit value.
-  const bestStackAtUnits: (Tool[] | null)[] = new Array<Tool[] | null>(targetUnits + 1).fill(null);
-  bestStackAtUnits[0] = [];
+  // dp[units] stores the best (fewest tools) stack and its maximum tool size for that exact unit value.
+  const bestAtUnits: ({ stack: Tool[], maxSize: number } | null)[] = 
+    new Array<{ stack: Tool[], maxSize: number } | null>(targetUnits + 1).fill(null);
+  
+  bestAtUnits[0] = { stack: [], maxSize: 0 };
 
   for (let currentUnits = 0; currentUnits <= targetUnits; currentUnits++) {
-    const currentStack = bestStackAtUnits[currentUnits];
-    if (!currentStack) continue;
+    const current = bestAtUnits[currentUnits];
+    if (!current) continue;
+
+    // Cache tool counts for current stack to avoid O(N) filter in inner loop
+    const toolCountsMap = new Map<number, number>();
+    for (const t of current.stack) {
+      toolCountsMap.set(t.size, (toolCountsMap.get(t.size) || 0) + 1);
+    }
 
     for (const tool of inventory) {
       const nextTotalUnits = currentUnits + tool.units;
       if (nextTotalUnits > targetUnits) continue;
 
-      // Limitation: We only allow a maximum of 2 tools of the same size per setup
-      // for smaller tools to avoid using up specific inventory sizes.
-      // For large "block" spacers (1.0" and above), we allow more.
-      const countOfThisToolUsed = currentStack.filter(t => t.size === tool.size).length;
+      // Limitation: Max 2 tools of the same size for small tools
+      const countOfThisToolUsed = toolCountsMap.get(tool.size) || 0;
       const maxAllowed = tool.size >= 1.0 ? 50 : 2;
       if (countOfThisToolUsed >= maxAllowed) continue;
 
-      const candidateStack = [...currentStack, tool];
-      const existingBestStack = bestStackAtUnits[nextTotalUnits];
+      const candidateStack = [...current.stack, tool];
+      const candidateMax = Math.max(current.maxSize, tool.size);
+      const existingBest = bestAtUnits[nextTotalUnits];
 
       let isCandidateBetter = false;
-      if (!existingBestStack) {
+      if (!existingBest) {
         isCandidateBetter = true;
-      } else if (candidateStack.length < existingBestStack.length) {
+      } else if (candidateStack.length < existingBest.stack.length) {
         // Preference 1: Fewer tools total.
         isCandidateBetter = true;
-      } else if (candidateStack.length === existingBestStack.length) {
+      } else if (candidateStack.length === existingBest.stack.length) {
         // Preference 2: Tie-breaker - Use larger tools if possible.
-        const maxCandidateSize = Math.max(...candidateStack.map(t => t.size));
-        const maxExistingSize = Math.max(...existingBestStack.map(t => t.size));
-        if (maxCandidateSize > maxExistingSize) isCandidateBetter = true;
+        if (candidateMax > existingBest.maxSize) isCandidateBetter = true;
       }
 
       if (isCandidateBetter) {
-        bestStackAtUnits[nextTotalUnits] = candidateStack;
+        bestAtUnits[nextTotalUnits] = { stack: candidateStack, maxSize: candidateMax };
       }
     }
   }
 
-  return bestStackAtUnits[targetUnits];
+  return bestAtUnits[targetUnits]?.stack || null;
 };
 
 /**

@@ -5,8 +5,10 @@ import { ValidatedSetupConfig } from './types';
 
 const createMockProfile = (): MachineProfile => ({
   id: 'test-machine',
+  name: 'Test Machine',
   arborLength: 60,
   tools: [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 0.0625, 0.125, 0.250, 0.375],
+  knives: [0.375],
   strictExclude: [0.5, 1.0],
   clearanceOnly: [0.125],
   toolLabels: {},
@@ -15,8 +17,8 @@ const createMockProfile = (): MachineProfile => ({
 
 const createConfig = (strips: Array<{width: number, quantity: number, minus: number, plus: number}>): ValidatedSetupConfig => ({
   coilWidth: 60,
-  coilWeight: 10000,
-  gauge: 0.036,
+  coilWeight: "10000",
+  gauge: "0.036",
   orderNumber: 'TEST-001',
   companyName: 'Test Co',
   knifeSize: 0.125,
@@ -61,7 +63,6 @@ describe('Full Setup Generator', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         const cut = result.value.cuts[0];
-        const female = cut.width;
         const maleTarget = cut.bottomStack.target; // Should be male-bottom for first cut
         
         // male = female - 2*knife - 2*clearance
@@ -118,15 +119,6 @@ describe('Full Setup Generator', () => {
 
   describe('Edge Cases', () => {
     test('handles zero edge trim', () => {
-      const config = createConfig([
-        { width: 29.875, quantity: 2, minus: 0.01, plus: 0.01 } 
-      ]);
-      // 2 * 29.875 + (2+1) * 0.125 (knife) = 59.75 + 0.375 = 60.125 (too wide for 60" arbor)
-      // Let's adjust to fit exactly.
-      // Arbor = 60.0. Knives = 3 * 0.125 = 0.375.
-      // Available for strips = 60.0 - 0.375 = 59.625.
-      // 59.625 / 2 = 29.8125.
-      
       const configExact = createConfig([
         { width: 29.8125, quantity: 2, minus: 0.01, plus: 0.01 }
       ]);

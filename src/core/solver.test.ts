@@ -5,8 +5,10 @@ import { MachineProfile } from '../config/machine-profiles';
 // Mock machine profile for testing
 const createMockProfile = (): MachineProfile => ({
   id: 'test-machine',
+  name: 'Test Machine',
   arborLength: 60,
   tools: [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 0.0625, 0.125, 0.250, 0.375],
+  knives: [0.375],
   strictExclude: [0.125, 0.25],
   clearanceOnly: [3.0],
   toolLabels: {},

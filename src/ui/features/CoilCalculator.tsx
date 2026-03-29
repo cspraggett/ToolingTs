@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,6 @@ export function CoilCalculator() {
 
   const stats = useMemo(() => {
     const w = parseFloat(width) || 0;
-    const g = parseFloat(gauge) || 0;
     const i = parseFloat(id) || 0;
     const o = parseFloat(od) || 0;
     const wr = parseFloat(weightToRemove) || 0;
@@ -27,7 +26,7 @@ export function CoilCalculator() {
       stopOD: stopOD.toFixed(3),
       remainingWeight: Math.round(remainingWeight),
     };
-  }, [width, gauge, id, od, weightToRemove]);
+  }, [width, id, od, weightToRemove]);
 
   return (
     <div className="space-y-6">

@@ -44,3 +44,19 @@ We refactored the data structure to mirror the physical arbors of the slitting m
   - Overarm shoulders are reversed from slitter setup (Slitter Opening = Overarm Closing).
   - "Extra width" (from 0.0625 padding + 0.094 discs vs slitter knives/clearance) must be removed evenly from both shoulders to keep overarms centered.
 
+## Slitter 4 Logic - Research Notes
+- **Working Theory**: Centering is based on a fixed **0.160" Outboard Knife Offset**.
+- **Model**:
+  - `Coil Edge = 34 - (Coil Width / 2)`
+  - `Knife Edge = Coil Edge - 0.160"`
+  - `Centering Amount = Knife Edge - 2.050 (Perm Shoulder)`
+  - `Top Opening = Centering Amount - 0.375`
+  - `Bottom Opening = Centering Amount + Clearance`
+- **60" Coil Test Case Results**:
+  - Top Opening: 1.415", Bottom Opening: 1.796"
+  - Top Closing: 3.290", Bottom Closing: 3.671"
+- **Open Questions**:
+  - Does gauge affect the centering (currently no)?
+  - Is the offset derived from "Scrap" (Coil Width - Cuts)?
+  - Clarify the physical presence of the 2.05" shoulder on the closing side (user mentioned it is there permanently, but math should calculate into it).
+

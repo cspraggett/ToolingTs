@@ -4,8 +4,39 @@ import {
   computeKnifeClearance,
   computeShoulders,
   computeCoilUsage,
-  summarizeCuts
+  summarizeCuts,
+  calculateSlitter4Shoulders
 } from './math';
+
+describe('calculateSlitter4Shoulders', () => {
+  it('calculates opening shoulders correctly based on exact formulas', () => {
+    // total_physical_width = 30.0
+    // clearance = 0.010
+    // machine_center = 33.175
+    // permanent_shoulder = 2.050
+    // knife_thickness = 0.375
+    
+    // centering_amount = 33.175 - 15.0 - 2.050 = 16.125
+    // bottom_opening = 16.125 + 0.010 = 16.135
+    // top_opening = 16.125 - 0.375 = 15.750
+
+    const result = calculateSlitter4Shoulders([10.0, 10.0, 10.0], 0.010);
+    expect(result.bottom_opening).toBe(16.135);
+    expect(result.top_opening).toBe(15.750);
+  });
+
+  it('handles small widths correctly', () => {
+    // total_physical_width = 1.0
+    // clearance = 0.005
+    // centering_amount = 33.175 - 0.5 - 2.050 = 30.625
+    // bottom_opening = 30.625 + 0.005 = 30.630
+    // top_opening = 30.625 - 0.375 = 30.250
+
+    const result = calculateSlitter4Shoulders([1.0], 0.005);
+    expect(result.bottom_opening).toBe(30.630);
+    expect(result.top_opening).toBe(30.250);
+  });
+});
 
 describe('summarizeCuts', () => {
   it('groups consecutive identical cuts', () => {
@@ -107,13 +138,9 @@ describe('computeShoulders', () => {
     // bottomClosing = 66.175 - 2.05 - 1.796 - 58.658 = 3.671
     // topClosing = 66.175 - 2.05 - 1.415 - 59.420 = 3.290
     
-    const result = computeShoulders(
-      58.682, 66.175, 0.375, 0.008, 0, 58.658, 59.420, 'slitter-4', 60.0, 0.057
-    );
-    
     // Adjusting for the 0.006 clearance provided in the text vs the 0.008 in the manual call above
     const resultWith006 = computeShoulders(
-      58.682, 66.175, 0.375, 0.006, 0, 58.658, 59.420, 'slitter-4', 60.0, 0.057
+      58.682, 66.175, 0.375, 0.006, 0, 58.658, 59.420, 'slitter-4', 60.0
     );
 
     expect(resultWith006.topOpening).toBe(1.415);

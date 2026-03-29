@@ -44,6 +44,42 @@ export const computeKnifeClearance = (
 const roundToTenThousandth = (val: number) => Math.round(val * 10000) / 10000;
 
 /**
+ * Calculates the outboard opening shoulders for "Slitter 4" based on the 
+ * compensated physical width of the tooling.
+ * 
+ * Rules:
+ * 1. Sum all compensated cut widths to get total_physical_width.
+ * 2. centering_amount = machine_center - (total_physical_width / 2) - permanent_shoulder
+ * 3. bottom_opening = centering_amount + clearance
+ * 4. top_opening = centering_amount - knife_thickness
+ * 
+ * Constants:
+ * - machine_center = 33.175
+ * - permanent_shoulder = 2.050
+ * - knife_thickness = 0.375
+ */
+export function calculateSlitter4Shoulders(
+  compensatedCutWidths: number[],
+  clearance: number
+) {
+  const MACHINE_CENTER = 33.175;
+  const PERMANENT_SHOULDER = 2.050;
+  const KNIFE_THICKNESS = 0.375;
+
+  const totalPhysicalWidth = compensatedCutWidths.reduce((sum, w) => sum + w, 0);
+  
+  const centeringAmount = MACHINE_CENTER - (totalPhysicalWidth / 2) - PERMANENT_SHOULDER;
+  
+  const bottomOpening = centeringAmount + clearance;
+  const topOpening = centeringAmount - KNIFE_THICKNESS;
+
+  return {
+    top_opening: roundToTenThousandth(topOpening),
+    bottom_opening: roundToTenThousandth(bottomOpening)
+  };
+}
+
+/**
  * Calculates the 4 shoulder areas (Opening Bottom/Top, Closing Bottom/Top).
  */
 export function computeShoulders(
@@ -55,8 +91,7 @@ export function computeShoulders(
   bottomArborUsed: number,
   topArborUsed: number,
   machineId?: string,
-  coilWidth: number = 0,
-  gauge: number = 0
+  coilWidth: number = 0
 ) {
   // Slitter 4 Specific Shoulder Logic (Permanent Shoulders + Center tracking)
   if (machineId === 'slitter-4') {

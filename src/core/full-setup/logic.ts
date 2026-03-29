@@ -133,8 +133,7 @@ export function generateFullSetup(
     bottomArborUsed,
     topArborUsed,
     machine.id,
-    coilWidth,
-    config.gauge
+    coilWidth
   );
 
   // 5. Solve tooling stacks for shoulders
